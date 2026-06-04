@@ -3,6 +3,7 @@ import express from "express";
 import {
   getMarketWriters,
   getOwnedWriters,
+  getWriterProfile,
   hireWriter,
   fireWriter,
   getWritingProjects,
@@ -17,6 +18,8 @@ const router = express.Router();
 router.get("/", protect, getMarketWriters);
 
 router.get("/owned", protect, getOwnedWriters);
+
+router.get("/:writerId/profile", protect, getWriterProfile);
 
 router.post("/hire/:index", protect, hireWriter);
 

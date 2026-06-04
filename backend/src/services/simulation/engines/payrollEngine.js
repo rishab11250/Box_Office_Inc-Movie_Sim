@@ -25,5 +25,13 @@ export const processWriterPayroll = (gameState, studio) => {
     );
   }
 
+  const payrollCoverage = Math.min(1, availableMoney / totalPayroll);
+
+  ownedWriters.forEach((writer) => {
+    const paidSalary = Math.floor(Number(writer.salary || 0) * payrollCoverage);
+
+    writer.totalEarnings = Number(writer.totalEarnings || 0) + paidSalary;
+  });
+
   studio.money = Math.max(0, availableMoney - totalPayroll);
 };

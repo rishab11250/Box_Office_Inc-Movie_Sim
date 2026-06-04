@@ -43,6 +43,12 @@ export const processWritingProjects = async (gameState, studio) => {
 
       writer.writtenScripts += 1;
 
+      if (script.quality >= 80) {
+        writer.hitScripts = Number(writer.hitScripts || 0) + 1;
+      } else if (script.quality <= 55) {
+        writer.flopScripts = Number(writer.flopScripts || 0) + 1;
+      }
+
       writer.reputation = Math.min(100, writer.reputation + 1);
 
       writer.morale = Math.min(100, writer.morale + 2);

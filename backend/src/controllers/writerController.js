@@ -1,6 +1,7 @@
 import GameState from "../models/GameState.js";
 import Studio from "../models/Studio.js";
 import { generateWriters } from "../services/writer/writerGenerator.js";
+import { buildWriterProfile } from "../services/writer/writerProfileService.js";
 import { presentWriters } from "../services/writer/writerPresenter.js";
 import crypto from "crypto";
 
@@ -39,6 +40,35 @@ export const getOwnedWriters = async (req, res) => {
 
   res.status(200).json({
     writers: presentWriters(gameState.ownedWriters),
+  });
+};
+
+
+export const getWriterProfile = async (req, res) => {
+  const { writerId } = req.params;
+
+  const gameState = await GameState.findOne({
+    user: req.user._id,
+  });
+
+  if (!gameState) {
+    return res.status(404).json({
+      message: "Game state not found",
+    });
+  }
+
+  const writer =
+    gameState.ownedWriters.find((w) => w.id === writerId) ||
+    gameState.marketWriters.find((w) => w.id === writerId);
+
+  if (!writer) {
+    return res.status(404).json({
+      message: "Writer not found",
+    });
+  }
+
+  res.status(200).json({
+    profile: buildWriterProfile(writer),
   });
 };
 

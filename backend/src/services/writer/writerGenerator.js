@@ -100,6 +100,20 @@ export const generateWriter = (forcedAge = null) => {
 
     hitScripts: 0,
 
+    flopScripts: 0,
+
+    awards: 0,
+
+    totalEarnings: 0,
+
+    salaryHistory: [
+      {
+        week: 1,
+        salary,
+        reason: "Initial Salary",
+      },
+    ],
+
     careerHistory: [],
 
     discovered: age < 25 ? 10 : age < 40 ? 40 : 80,

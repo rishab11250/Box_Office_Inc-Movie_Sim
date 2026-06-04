@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 const rarityStyles = {
   Common: "bg-slate-500/20 text-slate-300 border border-slate-500/30",
 
@@ -132,6 +134,13 @@ const WriterCard = ({
           <span className="text-xs text-slate-400 ml-1">/week</span>
         </p>
       </div>
+
+      <Link
+        to={`/writers/${writer.id}/profile`}
+        className="mt-4 block w-full rounded-xl bg-slate-700 py-3 text-center font-semibold text-white transition hover:bg-slate-600"
+      >
+        View Profile
+      </Link>
 
       {mode === "market" && (
         <button

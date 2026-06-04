@@ -110,6 +110,29 @@ const gameStateSchema = new mongoose.Schema(
           default: 0,
         },
 
+        flopScripts: {
+          type: Number,
+          default: 0,
+        },
+
+        awards: {
+          type: Number,
+          default: 0,
+        },
+
+        totalEarnings: {
+          type: Number,
+          default: 0,
+        },
+
+        salaryHistory: [
+          {
+            week: Number,
+            salary: Number,
+            reason: String,
+          },
+        ],
+
         careerHistory: [
           {
             scriptName: String,
@@ -171,6 +194,29 @@ const gameStateSchema = new mongoose.Schema(
           type: Number,
           default: 0,
         },
+
+        flopScripts: {
+          type: Number,
+          default: 0,
+        },
+
+        awards: {
+          type: Number,
+          default: 0,
+        },
+
+        totalEarnings: {
+          type: Number,
+          default: 0,
+        },
+
+        salaryHistory: [
+          {
+            week: Number,
+            salary: Number,
+            reason: String,
+          },
+        ],
 
         careerHistory: [
           {
