@@ -501,6 +501,41 @@ const gameStateSchema = new mongoose.Schema(
       },
     ],
 
+    activeDirectorProjects: [
+      {
+        id: String,
+
+        directorId: String,
+
+        directorName: String,
+
+        movieName: String,
+
+        genre: String,
+
+        startWeek: Number,
+
+        completionWeek: Number,
+
+        progress: Number,
+
+        qualityPenalty: {
+          type: Number,
+          default: 0,
+        },
+
+        replacementRequired: {
+          type: Boolean,
+          default: false,
+        },
+
+        status: {
+          type: String,
+          default: "DIRECTING",
+        },
+      },
+    ],
+
     activeWritingProjects: [
       {
         id: String,

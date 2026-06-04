@@ -18,6 +18,7 @@ const formatMoney = (amount) => Number(amount || 0).toLocaleString();
 
 const DirectorCard = ({ director, index, mode, onHire, onFire }) => {
   const avatar = `https://api.dicebear.com/7.x/personas/svg?seed=${director.avatarSeed}`;
+  const canRelease = director.status === "AVAILABLE";
 
   return (
     <div
@@ -131,12 +132,21 @@ const DirectorCard = ({ director, index, mode, onHire, onFire }) => {
       )}
 
       {mode === "owned" && (
-        <button
-          onClick={() => onFire(index)}
-          className="mt-4 w-full rounded-xl bg-red-600 py-3 font-semibold text-white transition hover:bg-red-700"
-        >
-          Release Director
-        </button>
+        <div className="mt-4 space-y-2">
+          {!canRelease && (
+            <p className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200">
+              Assigned directors must be replaced before release.
+            </p>
+          )}
+
+          <button
+            onClick={() => onFire(index)}
+            disabled={!canRelease}
+            className="w-full rounded-xl bg-red-600 py-3 font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
+          >
+            Release Director
+          </button>
+        </div>
       )}
     </div>
   );

@@ -11,6 +11,7 @@ const Directors = () => {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
 
   const fetchMarketDirectors = useCallback(async () => {
     const res = await api.get("/directors");
@@ -25,6 +26,7 @@ const Directors = () => {
   const loadDirectors = useCallback(async () => {
     try {
       setError("");
+      setNotice("");
       setLoading(true);
       await Promise.all([fetchMarketDirectors(), fetchOwnedDirectors()]);
     } catch (loadError) {
@@ -47,10 +49,12 @@ const Directors = () => {
     try {
       setActionLoading(true);
       setError("");
+      setNotice("");
       const res = await api.post(`/directors/hire/${index}`);
       setMarketDirectors(res.data.marketDirectors || []);
       setOwnedDirectors(res.data.ownedDirectors || []);
       setActiveTab("owned");
+      setNotice(`${res.data.director?.name || "Director"} hired successfully.`);
     } catch (hireError) {
       console.error(hireError);
       setError(hireError?.response?.data?.message || "Failed to hire director");
@@ -63,10 +67,19 @@ const Directors = () => {
     try {
       setActionLoading(true);
       setError("");
+      setNotice("");
       const res = await api.post(`/directors/fire/${index}`);
       setMarketDirectors(res.data.marketDirectors || []);
       setOwnedDirectors(res.data.ownedDirectors || []);
       setActiveTab("market");
+
+      if (res.data.compensation || res.data.fanLoss) {
+        setNotice(
+          `Director released. Compensation ₹${Number(
+            res.data.compensation || 0,
+          ).toLocaleString("en-IN")} paid and ${res.data.fanLoss || 0} fans lost.`,
+        );
+      }
     } catch (fireError) {
       console.error(fireError);
       setError(
@@ -182,6 +195,12 @@ const Directors = () => {
             </p>
           </div>
         </div>
+
+        {notice && (
+          <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-200">
+            {notice}
+          </div>
+        )}
 
         {error && (
           <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-red-200">
