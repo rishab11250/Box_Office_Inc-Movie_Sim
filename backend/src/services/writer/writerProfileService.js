@@ -1,15 +1,4 @@
-const qualityAverage = (careerHistory = []) => {
-  if (careerHistory.length === 0) {
-    return 0;
-  }
-
-  const totalQuality = careerHistory.reduce(
-    (total, entry) => total + Number(entry.scriptQuality || 0),
-    0
-  );
-
-  return Math.round(totalQuality / careerHistory.length);
-};
+import { calculateWriterAnalytics } from "./writerAnalyticsEngine.js";
 
 const uniqueStudiosWorkedWith = (writer) => {
   const studioNames = new Set();
@@ -46,9 +35,11 @@ const normalizeSalaryHistory = (writer) => {
 export const buildWriterProfile = (writer) => {
   const normalizedWriter = writer.toObject ? writer.toObject() : { ...writer };
   const careerHistory = normalizedWriter.careerHistory || [];
-  const totalScripts = careerHistory.length || Number(normalizedWriter.writtenScripts || 0);
+  const totalScripts =
+    careerHistory.length || Number(normalizedWriter.writtenScripts || 0);
   const hits = Number(normalizedWriter.hitScripts || 0);
   const flops = Number(normalizedWriter.flopScripts || 0);
+  const analytics = calculateWriterAnalytics(normalizedWriter);
 
   return {
     id: normalizedWriter.id,
@@ -65,11 +56,15 @@ export const buildWriterProfile = (writer) => {
       totalScripts,
       hits,
       flops,
-      hitRate: totalScripts > 0 ? Math.round((hits / totalScripts) * 100) : 0,
-      averageQuality: qualityAverage(careerHistory),
+      hitRate: analytics.hitRate,
+      flopRate: analytics.flopRate,
+      averageQuality: analytics.averageScriptQuality,
+      careerReputation: analytics.careerReputation,
+      marketValue: analytics.marketValue,
       awards: Number(normalizedWriter.awards || 0),
       totalEarnings: Number(normalizedWriter.totalEarnings || 0),
       salaryHistory: normalizeSalaryHistory(normalizedWriter),
+      analytics,
       scripts: careerHistory,
     },
   };
