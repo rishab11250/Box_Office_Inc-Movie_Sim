@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 import api from "../../api/axios";
 import DashboardLayout from "../../layouts/DashboardLayout";
@@ -9,6 +10,23 @@ const Scripts = () => {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("market");
+
+  const renderWriterName = (script) => {
+    const writerName = script.writer || "Unknown Writer";
+
+    if (!script.writerId) {
+      return <span>{writerName}</span>;
+    }
+
+    return (
+      <Link
+        to={`/writers/${script.writerId}/profile`}
+        className="font-semibold text-violet-300 transition hover:text-violet-200 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:ring-offset-2 focus:ring-offset-slate-950"
+      >
+        {writerName}
+      </Link>
+    );
+  };
 
   const fetchMarketScripts = useCallback(async () => {
     try {
@@ -140,6 +158,12 @@ const Scripts = () => {
 
             <h2 className="text-xl font-bold text-white">{script.title}</h2>
 
+            {script.writer && (
+              <p className="mt-2 text-sm text-slate-400">
+                Writer: {renderWriterName(script)}
+              </p>
+            )}
+
             <div className="flex flex-wrap gap-2 mt-3">
               {script.genres?.map((genre, genreIndex) => (
                 <span
@@ -222,6 +246,10 @@ const Scripts = () => {
             </div>
 
             <h2 className="text-xl font-bold text-white">{script.title}</h2>
+
+            <p className="mt-2 text-sm text-slate-400">
+              Writer: {renderWriterName(script)}
+            </p>
 
             <div className="flex flex-wrap gap-2 mt-3">
               {script.genres?.map((genre, genreIndex) => (

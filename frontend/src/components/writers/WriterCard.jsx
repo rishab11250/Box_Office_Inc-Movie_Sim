@@ -74,9 +74,12 @@ const WriterCard = ({
           className="w-24 h-24 rounded-full bg-slate-800 border border-slate-700"
         />
 
-        <h2 className="mt-4 text-xl font-bold text-white text-center">
+        <Link
+          to={`/writers/${writer.id}/profile`}
+          className="mt-4 text-xl font-bold text-white text-center transition hover:text-violet-300 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:ring-offset-2 focus:ring-offset-slate-950"
+        >
           {writer.name}
-        </h2>
+        </Link>
 
         <p className="text-sm text-slate-400">{writer.status}</p>
 
