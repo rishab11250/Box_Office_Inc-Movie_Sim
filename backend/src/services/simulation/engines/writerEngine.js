@@ -1,4 +1,5 @@
 import { createScriptFromWriter } from "../../writer/scriptCreationEngine.js";
+import { applyWriterSalaryProgression } from "../../writer/writerSalaryProgressionEngine.js";
 
 import { addNotification } from "../helpers/notificationHelper.js";
 
@@ -43,9 +44,12 @@ export const processWritingProjects = async (gameState, studio) => {
 
       writer.writtenScripts += 1;
 
-      if (script.quality >= 80) {
+      const wasHit = script.quality >= 80;
+      const wasFlop = script.quality <= 55;
+
+      if (wasHit) {
         writer.hitScripts = Number(writer.hitScripts || 0) + 1;
-      } else if (script.quality <= 55) {
+      } else if (wasFlop) {
         writer.flopScripts = Number(writer.flopScripts || 0) + 1;
       }
 
@@ -67,7 +71,22 @@ export const processWritingProjects = async (gameState, studio) => {
         scriptQuality: script.quality,
       });
 
+      const salaryProgression = applyWriterSalaryProgression({
+        writer,
+        script,
+        currentWeek: gameState.currentWeek,
+        wasHit,
+        wasFlop,
+      });
+
       addNotification(gameState, `${writer.name} completed "${script.title}".`);
+
+      if (salaryProgression.changed) {
+        addNotification(
+          gameState,
+          `${writer.name}'s salary changed from ₹${salaryProgression.previousSalary.toLocaleString()} to ₹${salaryProgression.nextSalary.toLocaleString()}.`
+        );
+      }
 
       const releasedWriter = writer.toObject ? writer.toObject() : { ...writer };
 
