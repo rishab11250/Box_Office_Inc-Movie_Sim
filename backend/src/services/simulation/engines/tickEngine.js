@@ -1,3 +1,4 @@
+import { processDirectorAwards } from "../../director/directorAwardsService.js";
 import { processDirectorAging } from "./directorEngine.js";
 import { processWriterPayroll } from "./payrollEngine.js";
 import { processWritingProjects } from "./writerEngine.js";
@@ -12,6 +13,8 @@ export const processWeeklyTick = async (gameState, studio) => {
   processWriterAging(gameState);
 
   processDirectorAging(gameState);
+
+  processDirectorAwards(gameState, studio);
 
   return gameState;
 };

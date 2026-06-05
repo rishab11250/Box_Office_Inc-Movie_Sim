@@ -315,6 +315,11 @@ const gameStateSchema = new mongoose.Schema(
 
         salary: Number,
 
+        marketValue: {
+          type: Number,
+          default: 0,
+        },
+
         rarity: String,
 
         genreExpertise: [String],
@@ -351,10 +356,15 @@ const gameStateSchema = new mongoose.Schema(
         awardsHistory: [
           {
             awardName: String,
+            category: String,
+            movieId: String,
+            movieTitle: String,
             movieName: String,
+            year: Number,
             week: Number,
             genre: String,
             rating: Number,
+            prestigeValue: Number,
             reputationGain: Number,
             skillBoosts: {
               creativity: Number,
@@ -422,6 +432,11 @@ const gameStateSchema = new mongoose.Schema(
 
         salary: Number,
 
+        marketValue: {
+          type: Number,
+          default: 0,
+        },
+
         rarity: String,
 
         genreExpertise: [String],
@@ -458,10 +473,15 @@ const gameStateSchema = new mongoose.Schema(
         awardsHistory: [
           {
             awardName: String,
+            category: String,
+            movieId: String,
+            movieTitle: String,
             movieName: String,
+            year: Number,
             week: Number,
             genre: String,
             rating: Number,
+            prestigeValue: Number,
             reputationGain: Number,
             skillBoosts: {
               creativity: Number,
@@ -510,6 +530,8 @@ const gameStateSchema = new mongoose.Schema(
     ],
 
     retiredDirectors: [mongoose.Schema.Types.Mixed],
+
+    directorAwardYearsProcessed: [Number],
 
     activeDirectorProjects: [
       {

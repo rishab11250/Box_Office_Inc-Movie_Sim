@@ -62,8 +62,8 @@ const normalizeAwards = (director) =>
   (director.awardsHistory || []).map((award) => ({
     awardName: award.awardName || "Unnamed Award",
     category: award.category || award.genre || "General",
-    movie: award.movieName || award.movie || "Unknown Movie",
-    year: weekToYear(award.week),
+    movie: award.movieTitle || award.movieName || award.movie || "Unknown Movie",
+    year: award.year || weekToYear(award.week),
     week: award.week || null,
   }));
 

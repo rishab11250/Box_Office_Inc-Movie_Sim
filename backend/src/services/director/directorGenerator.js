@@ -86,6 +86,8 @@ export const generateDirector = (forcedAge = null) => {
 
     salary,
 
+    marketValue: salary * 52,
+
     rarity,
 
     genreExpertise: getGenreExpertise(),
