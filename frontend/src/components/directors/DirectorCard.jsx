@@ -24,6 +24,7 @@ const DirectorCard = ({
   mode,
   onHire,
   onFire,
+  onStartDirecting,
   hitRate = 0,
   averageRating = 0,
 }) => {
@@ -182,6 +183,14 @@ const DirectorCard = ({
               Assigned directors must be replaced before release.
             </p>
           )}
+
+          <button
+            onClick={() => onStartDirecting(director)}
+            disabled={!canRelease}
+            className="w-full rounded-xl bg-violet-600 py-3 font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
+          >
+            Start Directing
+          </button>
 
           <button
             onClick={() => onFire(index)}

@@ -8,8 +8,30 @@ import {
 import { generateDirectors } from "../services/director/directorGenerator.js";
 import { buildDirectorProfile } from "../services/director/directorProfileService.js";
 import { presentDirectors } from "../services/director/directorPresenter.js";
+import {
+  createDirectingProject,
+  ensureScriptsProductionDefaults,
+} from "../services/director/directingProjectService.js";
 
 const findGameState = async (userId) => GameState.findOne({ user: userId });
+
+const presentDirectingProjects = (projects = []) =>
+  projects.map((project) => ({
+    id: project.id,
+    directorId: project.directorId,
+    directorName: project.directorName,
+    scriptId: project.scriptId,
+    scriptTitle: project.scriptTitle,
+    movieName: project.movieName,
+    genre: project.genre,
+    progress: Number(project.progress || 0),
+    startWeek: project.startWeek,
+    completionWeek: project.completionWeek,
+    status: project.status || "DIRECTING",
+    qualityPenalty: Number(project.qualityPenalty || 0),
+    replacementRequired: Boolean(project.replacementRequired),
+  }));
+
 
 const getDirectorProgress = (project, currentWeek) => {
   const existingProgress = Number(project.progress || 0);
@@ -90,6 +112,129 @@ export const getOwnedDirectors = async (req, res) => {
   }
 };
 
+
+export const getDirectingProjects = async (req, res) => {
+  try {
+    const gameState = await findGameState(req.user._id);
+
+    if (!gameState) {
+      return res.status(404).json({
+        success: false,
+        message: "Game state not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      projects: presentDirectingProjects(gameState.activeDirectorProjects || []),
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const startDirectingProject = async (req, res) => {
+  try {
+    const { directorId, scriptId } = req.body;
+
+    if (!directorId || !scriptId) {
+      return res.status(400).json({
+        success: false,
+        message: "Director and script are required",
+      });
+    }
+
+    const gameState = await findGameState(req.user._id);
+
+    if (!gameState) {
+      return res.status(404).json({
+        success: false,
+        message: "Game state not found",
+      });
+    }
+
+    ensureScriptsProductionDefaults(gameState.ownedScripts);
+
+    const director = gameState.ownedDirectors?.find(
+      (candidate) => candidate.id === directorId
+    );
+
+    if (!director) {
+      return res.status(404).json({
+        success: false,
+        message: "Director not found",
+      });
+    }
+
+    if (director.status !== "AVAILABLE") {
+      return res.status(400).json({
+        success: false,
+        message: "Director is not available",
+      });
+    }
+
+    const script = gameState.ownedScripts?.find(
+      (candidate) => candidate.id === scriptId
+    );
+
+    if (!script) {
+      return res.status(404).json({
+        success: false,
+        message: "Script not found",
+      });
+    }
+
+    const scriptStatus = script.status || "AVAILABLE";
+
+    if (scriptStatus !== "AVAILABLE") {
+      return res.status(400).json({
+        success: false,
+        message: "Script is not available for directing",
+      });
+    }
+
+    const project = createDirectingProject({
+      director,
+      script,
+      currentWeek: gameState.currentWeek,
+    });
+
+    director.status = "DIRECTING";
+    director.busyUntilWeek = project.completionWeek;
+
+    script.status = "IN_DIRECTING";
+    script.assignedDirectorId = director.id;
+    script.assignedDirectorName = director.name;
+    script.directingProjectId = project.id;
+
+    gameState.activeDirectorProjects = gameState.activeDirectorProjects || [];
+    gameState.activeDirectorProjects.push(project);
+
+    gameState.notifications.push({
+      message: `${director.name} started directing ${script.title}.`,
+      createdAt: new Date(),
+    });
+
+    await gameState.save();
+
+    return res.status(201).json({
+      success: true,
+      message: "Directing project started",
+      project: presentDirectingProjects([project])[0],
+      projects: presentDirectingProjects(gameState.activeDirectorProjects),
+      ownedDirectors: presentDirectors(gameState.ownedDirectors || []),
+      ownedScripts: gameState.ownedScripts || [],
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 
 export const getDirectorProfile = async (req, res) => {
   try {
@@ -333,6 +478,17 @@ export const replaceDirector = async (req, res) => {
     project.directorName = newDirector.name;
     project.qualityPenalty = Number(project.qualityPenalty || 0) + penalty;
     project.replacementRequired = false;
+
+    const assignedScript = gameState.ownedScripts?.find(
+      (script) => script.id === project.scriptId
+    );
+
+    if (assignedScript) {
+      assignedScript.assignedDirectorId = newDirector.id;
+      assignedScript.assignedDirectorName = newDirector.name;
+      assignedScript.directingProjectId = project.id;
+      assignedScript.status = "IN_DIRECTING";
+    }
 
     newDirector.status = "DIRECTING";
     newDirector.busyUntilWeek = project.completionWeek;

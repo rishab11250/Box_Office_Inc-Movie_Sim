@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import api from "../../api/axios";
 import DirectorCard from "../../components/directors/DirectorCard";
+import DirectingProjectCard from "../../components/directors/DirectingProjectCard";
 import DashboardLayout from "../../layouts/DashboardLayout";
 
 const genres = [
@@ -177,6 +178,8 @@ const filterAndSortDirectors = (
 const Directors = () => {
   const [marketDirectors, setMarketDirectors] = useState([]);
   const [ownedDirectors, setOwnedDirectors] = useState([]);
+  const [directingProjects, setDirectingProjects] = useState([]);
+  const [ownedScripts, setOwnedScripts] = useState([]);
   const [activeTab, setActiveTab] = useState("market");
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -190,6 +193,8 @@ const Directors = () => {
   const [reputationFilter, setReputationFilter] = useState("All");
   const [salaryFilter, setSalaryFilter] = useState("All");
   const [sortBy, setSortBy] = useState("reputationDesc");
+  const [startModalDirector, setStartModalDirector] = useState(null);
+  const [selectedScriptId, setSelectedScriptId] = useState("");
 
   const fetchMarketDirectors = useCallback(async () => {
     const res = await api.get("/directors");
@@ -201,12 +206,27 @@ const Directors = () => {
     setOwnedDirectors(res.data.directors || []);
   }, []);
 
+  const fetchDirectingProjects = useCallback(async () => {
+    const res = await api.get("/directors/projects");
+    setDirectingProjects(res.data.projects || []);
+  }, []);
+
+  const fetchOwnedScripts = useCallback(async () => {
+    const res = await api.get("/scripts/owned");
+    setOwnedScripts(res.data.scripts || []);
+  }, []);
+
   const loadDirectors = useCallback(async () => {
     try {
       setError("");
       setNotice("");
       setLoading(true);
-      await Promise.all([fetchMarketDirectors(), fetchOwnedDirectors()]);
+      await Promise.all([
+        fetchMarketDirectors(),
+        fetchOwnedDirectors(),
+        fetchDirectingProjects(),
+        fetchOwnedScripts(),
+      ]);
     } catch (loadError) {
       console.error(loadError);
       setError(
@@ -215,7 +235,12 @@ const Directors = () => {
     } finally {
       setLoading(false);
     }
-  }, [fetchMarketDirectors, fetchOwnedDirectors]);
+  }, [
+    fetchMarketDirectors,
+    fetchOwnedDirectors,
+    fetchDirectingProjects,
+    fetchOwnedScripts,
+  ]);
 
   useEffect(() => {
     const refreshTimer = window.setTimeout(loadDirectors, 0);
@@ -263,6 +288,53 @@ const Directors = () => {
       setError(
         fireError?.response?.data?.message || "Failed to release director",
       );
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const availableScripts = useMemo(
+    () => ownedScripts.filter((script) => (script.status || "AVAILABLE") === "AVAILABLE"),
+    [ownedScripts],
+  );
+
+  const openStartDirectingModal = (director) => {
+    setError("");
+    setNotice("");
+    setStartModalDirector(director);
+    setSelectedScriptId(availableScripts[0]?.id || "");
+  };
+
+  const closeStartDirectingModal = () => {
+    setStartModalDirector(null);
+    setSelectedScriptId("");
+  };
+
+  const handleStartDirecting = async () => {
+    if (!startModalDirector || !selectedScriptId) {
+      setError("Select an available script before starting direction.");
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      setError("");
+      setNotice("");
+
+      const res = await api.post("/directors/start-directing", {
+        directorId: startModalDirector.id,
+        scriptId: selectedScriptId,
+      });
+
+      setOwnedDirectors(res.data.ownedDirectors || []);
+      setOwnedScripts(res.data.ownedScripts || []);
+      setDirectingProjects(res.data.projects || []);
+      setActiveTab("projects");
+      setNotice(res.data.message || "Directing project started.");
+      closeStartDirectingModal();
+    } catch (startError) {
+      console.error(startError);
+      setError(startError?.response?.data?.message || "Failed to start directing");
     } finally {
       setActionLoading(false);
     }
@@ -319,6 +391,16 @@ const Directors = () => {
   const currentDirectors =
     activeTab === "market" ? filteredMarketDirectors : filteredOwnedDirectors;
 
+  const currentCount =
+    activeTab === "projects" ? directingProjects.length : currentDirectors.length;
+
+  const totalCount =
+    activeTab === "market"
+      ? marketDirectors.length
+      : activeTab === "owned"
+        ? ownedDirectors.length
+        : directingProjects.length;
+
   const clearFilters = () => {
     setSearch("");
     setSelectedGenre("All");
@@ -329,7 +411,36 @@ const Directors = () => {
     setSortBy("reputationDesc");
   };
 
+  const renderProjects = () => {
+    if (directingProjects.length === 0) {
+      return (
+        <div className="rounded-2xl border border-slate-800 bg-[#111827] p-12 text-center">
+          <h2 className="mb-3 text-2xl font-bold text-white">
+            No Active Directing Projects
+          </h2>
+          <p className="text-slate-400">
+            Start directing from an owned director card to move scripts toward pre-production.
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className={actionLoading ? "pointer-events-none opacity-70" : ""}>
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {directingProjects.map((project) => (
+            <DirectingProjectCard key={project.id} project={project} />
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   const renderDirectors = () => {
+    if (activeTab === "projects") {
+      return renderProjects();
+    }
+
     if (currentDirectors.length === 0) {
       return (
         <div className="rounded-2xl border border-slate-800 bg-[#111827] p-12 text-center">
@@ -358,6 +469,7 @@ const Directors = () => {
               mode={activeTab}
               onHire={handleHire}
               onFire={handleFire}
+              onStartDirecting={openStartDirectingModal}
               hitRate={getHitRate(director)}
               averageRating={getAverageRating(director)}
             />
@@ -399,6 +511,17 @@ const Directors = () => {
               }`}
             >
               Owned ({ownedDirectors.length})
+            </button>
+
+            <button
+              onClick={() => setActiveTab("projects")}
+              className={`rounded-xl px-5 py-3 font-semibold transition ${
+                activeTab === "projects"
+                  ? "bg-violet-600 text-white"
+                  : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+              }`}
+            >
+              Projects ({directingProjects.length})
             </button>
 
             <button
@@ -497,9 +620,8 @@ const Directors = () => {
 
         <div className="flex items-center justify-between text-sm text-slate-400">
           <span>
-            Showing {currentDirectors.length} of{" "}
-            {activeTab === "market" ? marketDirectors.length : ownedDirectors.length}{" "}
-            directors
+            Showing {currentCount} of {totalCount}{" "}
+            {activeTab === "projects" ? "projects" : "directors"}
           </span>
           <button
             onClick={clearFilters}
@@ -525,16 +647,9 @@ const Directors = () => {
           </div>
 
           <div className="rounded-2xl border border-slate-800 bg-[#111827] p-5">
-            <p className="text-sm text-slate-400">Average Rating</p>
+            <p className="text-sm text-slate-400">Active Projects</p>
             <p className="mt-2 text-3xl font-bold text-white">
-              {currentDirectors.length === 0
-                ? "0.0"
-                : (
-                    currentDirectors.reduce(
-                      (sum, director) => sum + getAverageRating(director),
-                      0,
-                    ) / currentDirectors.length
-                  ).toFixed(1)}
+              {directingProjects.length}
             </p>
           </div>
         </div>
@@ -559,6 +674,54 @@ const Directors = () => {
           renderDirectors()
         )}
       </div>
+
+        {startModalDirector && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+            <div className="w-full max-w-lg rounded-3xl border border-slate-800 bg-slate-950 p-6 shadow-2xl">
+              <h2 className="text-2xl font-bold text-white">Start Directing</h2>
+              <p className="mt-2 text-slate-400">
+                Assign {startModalDirector.name} to an available owned script.
+              </p>
+
+              {availableScripts.length === 0 ? (
+                <p className="mt-5 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-amber-100">
+                  No available owned scripts. Buy or complete a script before starting a directing project.
+                </p>
+              ) : (
+                <label className="mt-5 block text-sm font-medium text-slate-300">
+                  Script
+                  <select
+                    value={selectedScriptId}
+                    onChange={(event) => setSelectedScriptId(event.target.value)}
+                    className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-800 p-3 text-white outline-none focus:border-violet-500"
+                  >
+                    {availableScripts.map((script) => (
+                      <option key={script.id} value={script.id}>
+                        {script.title} — {script.genres?.join(", ") || "Genre TBD"} — Quality {script.quality}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  onClick={closeStartDirectingModal}
+                  className="rounded-xl bg-slate-800 px-5 py-3 font-semibold text-slate-200 transition hover:bg-slate-700"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleStartDirecting}
+                  disabled={actionLoading || availableScripts.length === 0}
+                  className="rounded-xl bg-violet-600 px-5 py-3 font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
+                >
+                  Start Project
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
     </DashboardLayout>
   );
 };

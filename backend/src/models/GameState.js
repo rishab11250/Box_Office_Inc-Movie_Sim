@@ -16,6 +16,8 @@ const gameStateSchema = new mongoose.Schema(
 
     ownedScripts: [
       {
+        id: String,
+
         title: String,
 
         genres: [String],
@@ -48,11 +50,25 @@ const gameStateSchema = new mongoose.Schema(
         creationDate: Date,
 
         purchasedAt: Date,
+
+        status: {
+          type: String,
+          enum: ["AVAILABLE", "IN_DIRECTING", "PRE_PRODUCTION_READY", "SOLD"],
+          default: "AVAILABLE",
+        },
+
+        assignedDirectorId: String,
+
+        assignedDirectorName: String,
+
+        directingProjectId: String,
       },
     ],
 
     marketScripts: [
       {
+        id: String,
+
         title: String,
 
         genres: [String],
@@ -81,6 +97,18 @@ const gameStateSchema = new mongoose.Schema(
         },
 
         creationDate: Date,
+
+        status: {
+          type: String,
+          enum: ["AVAILABLE", "IN_DIRECTING", "PRE_PRODUCTION_READY", "SOLD"],
+          default: "AVAILABLE",
+        },
+
+        assignedDirectorId: String,
+
+        assignedDirectorName: String,
+
+        directingProjectId: String,
       },
     ],
 
@@ -88,6 +116,31 @@ const gameStateSchema = new mongoose.Schema(
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Movie",
+      },
+    ],
+
+    preProductionMovies: [
+      {
+        id: String,
+
+        title: String,
+
+        scriptId: String,
+
+        scriptTitle: String,
+
+        directorId: String,
+
+        directorName: String,
+
+        genre: String,
+
+        projectedQuality: Number,
+
+        stage: {
+          type: String,
+          default: "PRE_PRODUCTION_READY",
+        },
       },
     ],
 
@@ -540,6 +593,12 @@ const gameStateSchema = new mongoose.Schema(
         directorId: String,
 
         directorName: String,
+
+        scriptId: String,
+
+        scriptTitle: String,
+
+        scriptQuality: Number,
 
         movieName: String,
 

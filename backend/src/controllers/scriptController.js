@@ -1,7 +1,10 @@
+import crypto from "crypto";
+
 import GameState from "../models/GameState.js";
 import Studio from "../models/Studio.js";
 import { generateScripts } from "../services/script/scriptGenerator.js";
 import { calculateFallbackScriptSellPrice } from "../services/script/scriptResalePricing.js";
+import { ensureScriptsProductionDefaults } from "../services/director/directingProjectService.js";
 
 export const generateMarketScripts = async (req, res) => {
   try {
@@ -94,6 +97,7 @@ export const buyScript = async (req, res) => {
     const sellPrice = Math.floor(script.price * (sellPercentage / 100));
 
     gameState.ownedScripts.push({
+      id: script.id || crypto.randomUUID(),
       title: script.title,
       genres: script.genres,
       quality: script.quality,
@@ -109,6 +113,10 @@ export const buyScript = async (req, res) => {
       studioId: studio._id,
       creationDate: script.creationDate || new Date(),
       purchasedAt: new Date(),
+      status: "AVAILABLE",
+      assignedDirectorId: null,
+      assignedDirectorName: null,
+      directingProjectId: null,
     });
 
     gameState.marketScripts.splice(index, 1);
@@ -138,7 +146,18 @@ export const getOwnedScripts = async (req, res) => {
       user: req.user._id,
     });
 
-    res.status(200).json({
+    if (!gameState) {
+      return res.status(404).json({
+        success: false,
+        message: "Game state not found",
+      });
+    }
+
+    ensureScriptsProductionDefaults(gameState.ownedScripts);
+
+    await gameState.save();
+
+    return res.status(200).json({
       success: true,
       scripts: gameState.ownedScripts,
     });
@@ -168,6 +187,15 @@ export const sellScript = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "Script not found",
+      });
+    }
+
+    const scriptStatus = script.status || "AVAILABLE";
+
+    if (scriptStatus === "IN_DIRECTING") {
+      return res.status(400).json({
+        success: false,
+        message: "Script is currently in directing and cannot be sold",
       });
     }
 

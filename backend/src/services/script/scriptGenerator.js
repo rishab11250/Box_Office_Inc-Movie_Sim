@@ -1,3 +1,5 @@
+import crypto from "crypto";
+
 import { generateTitle } from "./titleGenerator.js";
 import { generateGenres } from "./genreGenerator.js";
 import { calculatePrice } from "./priceCalculator.js";
@@ -20,6 +22,8 @@ export const generateScripts = (count = 5) => {
     });
 
     return {
+      id: crypto.randomUUID(),
+
       title: generateTitle(),
 
       genres: generateGenres(),
@@ -50,6 +54,14 @@ export const generateScripts = (count = 5) => {
       studioId: null,
 
       creationDate: new Date(),
+
+      status: "AVAILABLE",
+
+      assignedDirectorId: null,
+
+      assignedDirectorName: null,
+
+      directingProjectId: null,
     };
   });
 };

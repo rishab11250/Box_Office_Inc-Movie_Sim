@@ -100,6 +100,10 @@ export const processWritingProjects = async (gameState, studio) => {
         studioId: studio?._id || null,
         creationDate,
         createdAt: creationDate,
+        status: "AVAILABLE",
+        assignedDirectorId: null,
+        assignedDirectorName: null,
+        directingProjectId: null,
       });
 
       addNotification(gameState, `${writer.name} completed "${script.title}".`);
