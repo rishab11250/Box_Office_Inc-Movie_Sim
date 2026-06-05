@@ -582,6 +582,227 @@ const gameStateSchema = new mongoose.Schema(
       },
     ],
 
+
+    marketActors: [
+      {
+        id: String,
+
+        name: String,
+
+        avatarSeed: String,
+
+        age: Number,
+
+        popularity: Number,
+
+        actingSkill: Number,
+
+        reliability: Number,
+
+        fanbase: Number,
+
+        morale: Number,
+
+        salary: Number,
+
+        rarity: String,
+
+        hiddenPotential: Number,
+
+        status: {
+          type: String,
+          default: "AVAILABLE",
+        },
+
+        busyUntilWeek: Number,
+
+        contractYears: Number,
+
+        movies: {
+          type: Number,
+          default: 0,
+        },
+
+        leadRoles: {
+          type: Number,
+          default: 0,
+        },
+
+        supportingRoles: {
+          type: Number,
+          default: 0,
+        },
+
+        hitMovies: {
+          type: Number,
+          default: 0,
+        },
+
+        flopMovies: {
+          type: Number,
+          default: 0,
+        },
+
+        awards: {
+          type: Number,
+          default: 0,
+        },
+
+        boxOfficeTotal: {
+          type: Number,
+          default: 0,
+        },
+
+        careerEarnings: {
+          type: Number,
+          default: 0,
+        },
+
+        salaryHistory: [
+          {
+            week: Number,
+            salary: Number,
+            reason: String,
+          },
+        ],
+
+        careerHistory: [
+          {
+            movieId: String,
+            movieTitle: String,
+            studioName: String,
+            roleType: String,
+            genre: String,
+            completionWeek: Number,
+            actorRating: Number,
+            boxOffice: Number,
+            verdict: String,
+          },
+        ],
+
+        studiosWorkedWith: [String],
+
+        discovered: {
+          type: Number,
+          default: 0,
+        },
+
+        hiredAt: Date,
+      },
+    ],
+
+    ownedActors: [
+      {
+        id: String,
+
+        name: String,
+
+        avatarSeed: String,
+
+        age: Number,
+
+        popularity: Number,
+
+        actingSkill: Number,
+
+        reliability: Number,
+
+        fanbase: Number,
+
+        morale: Number,
+
+        salary: Number,
+
+        rarity: String,
+
+        hiddenPotential: Number,
+
+        status: {
+          type: String,
+          default: "AVAILABLE",
+        },
+
+        busyUntilWeek: Number,
+
+        contractYears: Number,
+
+        movies: {
+          type: Number,
+          default: 0,
+        },
+
+        leadRoles: {
+          type: Number,
+          default: 0,
+        },
+
+        supportingRoles: {
+          type: Number,
+          default: 0,
+        },
+
+        hitMovies: {
+          type: Number,
+          default: 0,
+        },
+
+        flopMovies: {
+          type: Number,
+          default: 0,
+        },
+
+        awards: {
+          type: Number,
+          default: 0,
+        },
+
+        boxOfficeTotal: {
+          type: Number,
+          default: 0,
+        },
+
+        careerEarnings: {
+          type: Number,
+          default: 0,
+        },
+
+        salaryHistory: [
+          {
+            week: Number,
+            salary: Number,
+            reason: String,
+          },
+        ],
+
+        careerHistory: [
+          {
+            movieId: String,
+            movieTitle: String,
+            studioName: String,
+            roleType: String,
+            genre: String,
+            completionWeek: Number,
+            actorRating: Number,
+            boxOffice: Number,
+            verdict: String,
+          },
+        ],
+
+        studiosWorkedWith: [String],
+
+        discovered: {
+          type: Number,
+          default: 0,
+        },
+
+        hiredAt: Date,
+      },
+    ],
+
+    retiredActors: [mongoose.Schema.Types.Mixed],
+
+    actorAwardYearsProcessed: [Number],
+
     retiredDirectors: [mongoose.Schema.Types.Mixed],
 
     directorAwardYearsProcessed: [Number],
@@ -623,6 +844,43 @@ const gameStateSchema = new mongoose.Schema(
         status: {
           type: String,
           default: "DIRECTING",
+        },
+      },
+    ],
+
+
+    activeActorProjects: [
+      {
+        id: String,
+
+        actorId: String,
+
+        actorName: String,
+
+        movieId: String,
+
+        movieTitle: String,
+
+        roleType: String,
+
+        startWeek: Number,
+
+        completionWeek: Number,
+
+        progress: Number,
+
+        performanceScore: Number,
+
+        qualityImpact: Number,
+
+        replacementRequired: {
+          type: Boolean,
+          default: false,
+        },
+
+        status: {
+          type: String,
+          default: "ACTING",
         },
       },
     ],
