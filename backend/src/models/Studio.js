@@ -16,7 +16,7 @@ const studioSchema = new mongoose.Schema(
 
     money: {
       type: Number,
-      default: 1000000,
+      default: 5000000,
       min: 0,
     },
 
