@@ -129,6 +129,42 @@ export const hireActor = async (req, res) => {
   }
 };
 
+export const getActorProfile = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const gameState = await findGameState(req.user._id);
+
+    if (!gameState) {
+      return res.status(404).json({
+        success: false,
+        message: "Game state not found",
+      });
+    }
+
+    const actor =
+      gameState.ownedActors?.find((candidate) => candidate.id === id) ||
+      gameState.marketActors?.find((candidate) => candidate.id === id) ||
+      gameState.retiredActors?.find((candidate) => candidate.id === id);
+
+    if (!actor) {
+      return res.status(404).json({
+        success: false,
+        message: "Actor not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      actor,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
 export const fireActor = async (req, res) => {
   try {
     const { index } = req.params;

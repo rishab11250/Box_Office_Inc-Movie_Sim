@@ -53,6 +53,31 @@ const studioSchema = new mongoose.Schema(
         title: String,
         amount: Number
     },
+
+    stats: {
+        moviesReleased: { type: Number, default: 0 },
+        hits: { type: Number, default: 0 },
+        blockbusters: { type: Number, default: 0 },
+        allTimeBlockbusters: { type: Number, default: 0 },
+        flops: { type: Number, default: 0 },
+        disasters: { type: Number, default: 0 },
+        totalRevenue: { type: Number, default: 0 },
+        totalProfit: { type: Number, default: 0 },
+        avgCriticScore: { type: Number, default: 0 },
+        avgAudienceScore: { type: Number, default: 0 }
+    },
+
+    financialHistory: [{
+        week: Number,
+        year: Number,
+        revenue: Number,
+        expenses: Number,
+        payroll: Number,
+        movieCosts: Number,
+        marketingCosts: Number,
+        profit: Number,
+        balance: Number
+    }],
   },
   {
     timestamps: true,

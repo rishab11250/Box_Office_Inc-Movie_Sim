@@ -42,6 +42,8 @@ export const processWritingProjects = async (gameState, studio) => {
       writer.writtenScripts += 1;
 
       // Note: Writer Hit/Flop logic moved to Movie Release pipeline to ensure consistency.
+      const wasHit = script.quality >= 80;
+      const wasFlop = script.quality <= 55;
 
       writer.reputation = Math.min(100, writer.reputation + 1);
 

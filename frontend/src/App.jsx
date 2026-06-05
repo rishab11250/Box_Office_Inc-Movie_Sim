@@ -18,6 +18,12 @@ import MovieDetails from "./pages/movies/MovieDetails";
 import ReadyForRelease from "./pages/movies/ReadyForRelease";
 import ReleaseResult from "./pages/movies/ReleaseResult";
 import MovieLibrary from "./pages/movies/MovieLibrary";
+import ReleasedMovieDetail from "./pages/movies/ReleasedMovieDetail";
+import ProductionQueue from "./pages/movies/ProductionQueue";
+import MovieComparison from "./pages/movies/MovieComparison";
+import StudioStats from "./pages/studio/StudioStats";
+import FinancialHistory from "./pages/studio/FinancialHistory";
+import TalentProfile from "./pages/talent/TalentProfile";
 import DirectorProfile from "./pages/directors/DirectorProfile";
 import WriterProfile from "./pages/writers/WriterProfile";
 import Notifications from "./pages/notifications/Notifications";
@@ -70,6 +76,30 @@ function App() {
           element={
             <ProtectedRoute>
               <MovieLibrary />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/movies/library/:id"
+          element={
+            <ProtectedRoute>
+              <ReleasedMovieDetail />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/movies/queue"
+          element={
+            <ProtectedRoute>
+              <ProductionQueue />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/movies/comparison"
+          element={
+            <ProtectedRoute>
+              <MovieComparison />
             </ProtectedRoute>
           }
         />
@@ -145,6 +175,15 @@ function App() {
         />
 
         <Route
+          path="/talent/:type/:id"
+          element={
+            <ProtectedRoute>
+              <TalentProfile />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/crew"
           element={
             <ProtectedRoute>
@@ -157,6 +196,23 @@ function App() {
           element={
             <ProtectedRoute>
               <OwnedCrew />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/studio/stats"
+          element={
+            <ProtectedRoute>
+              <StudioStats />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/studio/history"
+          element={
+            <ProtectedRoute>
+              <FinancialHistory />
             </ProtectedRoute>
           }
         />

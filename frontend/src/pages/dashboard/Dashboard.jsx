@@ -18,6 +18,9 @@ const Dashboard = () => {
   const [customWeeks, setCustomWeeks] = useState(1);
   const { user } = useSelector((state) => state.auth);
 
+  const currentYear = Math.floor((user?.currentWeek || 1) / 52) + 1;
+  const currentWeekInYear = ((user?.currentWeek - 1) % 52) + 1;
+
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -97,6 +100,23 @@ const Dashboard = () => {
               {loading ? "Simulating..." : "Run Custom"}
             </button>
           </div>
+        </div>
+
+        {/* Timeline Display */}
+        <div className="bg-[#111827] border border-slate-800 rounded-2xl p-6 flex justify-between items-center">
+            <div className="flex items-center gap-4">
+                <div className="bg-violet-600/20 text-violet-400 p-3 rounded-xl"><Calendar size={24} /></div>
+                <div>
+                    <div className="text-white font-black text-2xl tracking-tighter">YEAR {currentYear} • WEEK {currentWeekInYear}</div>
+                    <div className="text-slate-500 text-xs font-bold uppercase tracking-widest">Global Industry Timeline</div>
+                </div>
+            </div>
+            <div className="hidden md:block w-64 bg-slate-800 h-2 rounded-full overflow-hidden">
+                <div
+                    className="bg-violet-500 h-full transition-all duration-1000"
+                    style={{ width: `${(currentWeekInYear / 52) * 100}%` }}
+                />
+            </div>
         </div>
 
         {/* Stats */}

@@ -15,6 +15,8 @@ router.get("/", protect, getMarketActors);
 
 router.get("/owned", protect, getOwnedActors);
 
+router.get("/:id/profile", protect, getActorProfile);
+
 router.post("/hire/:index", protect, hireActor);
 
 router.post("/fire/:index", protect, fireActor);

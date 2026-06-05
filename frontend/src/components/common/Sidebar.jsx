@@ -38,6 +38,16 @@ const Sidebar = () => {
       icon: Film,
     },
     {
+      name: "Production Queue",
+      path: "/movies/queue",
+      icon: Layers,
+    },
+    {
+      name: "Comparison",
+      path: "/movies/comparison",
+      icon: Scale,
+    },
+    {
       name: "Scripts",
       path: "/scripts",
       icon: Film,
@@ -78,9 +88,14 @@ const Sidebar = () => {
       icon: Users,
     },
     {
-      name: "Studio",
-      path: "/studio",
+      name: "Studio Stats",
+      path: "/studio/stats",
       icon: Building2,
+    },
+    {
+      name: "Financials",
+      path: "/studio/history",
+      icon: IndianRupee,
     },
     {
       name: "Market",
