@@ -1,16 +1,104 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import api from "../../api/axios";
 import DashboardLayout from "../../layouts/DashboardLayout";
-import { Users, Briefcase, Star, TrendingUp, Filter } from "lucide-react";
 import { showToast } from "../../features/ui/toastSlice";
+import {
+  selectCrewFilters,
+  setCrewFilters,
+  resetCrewFilters,
+} from "../../features/talent/talentSlice";
+
+// Average of a crew team's four skill stats — used for the quality filter
+// and the overall-quality sort so "quality" means the same thing everywhere.
+const getCrewQuality = (crew) => {
+  const technical = Number(crew.technicalQuality || 0);
+  const creativity = Number(crew.creativity || 0);
+  const reliability = Number(crew.reliability || 0);
+  const vfx = Number(crew.vfxQuality || 0);
+  return (technical + creativity + reliability + vfx) / 4;
+};
+
+const filterAndSortCrew = (crewTeams, search, rarityFilter, qualityFilter, salaryFilter, sortBy) => {
+  let filtered = [...crewTeams];
+
+  const query = search.trim().toLowerCase();
+  if (query) {
+    filtered = filtered.filter((crew) => crew.name?.toLowerCase().includes(query));
+  }
+
+  if (rarityFilter !== "All") {
+    filtered = filtered.filter((crew) => crew.rarity === rarityFilter);
+  }
+
+  if (qualityFilter === "Basic") {
+    filtered = filtered.filter((crew) => getCrewQuality(crew) < 50);
+  }
+
+  if (qualityFilter === "Skilled") {
+    filtered = filtered.filter((crew) => getCrewQuality(crew) >= 50 && getCrewQuality(crew) < 75);
+  }
+
+  if (qualityFilter === "Elite") {
+    filtered = filtered.filter((crew) => getCrewQuality(crew) >= 75);
+  }
+
+  if (salaryFilter === "Budget") {
+    filtered = filtered.filter((crew) => Number(crew.salary || 0) < 150000);
+  }
+
+  if (salaryFilter === "MidRange") {
+    filtered = filtered.filter(
+      (crew) => Number(crew.salary || 0) >= 150000 && Number(crew.salary || 0) < 400000,
+    );
+  }
+
+  if (salaryFilter === "Premium") {
+    filtered = filtered.filter((crew) => Number(crew.salary || 0) >= 400000);
+  }
+
+  switch (sortBy) {
+    case "technicalDesc":
+      filtered.sort((a, b) => Number(b.technicalQuality || 0) - Number(a.technicalQuality || 0));
+      break;
+    case "qualityDesc":
+      filtered.sort((a, b) => getCrewQuality(b) - getCrewQuality(a));
+      break;
+    case "vfxDesc":
+      filtered.sort((a, b) => Number(b.vfxQuality || 0) - Number(a.vfxQuality || 0));
+      break;
+    case "creativityDesc":
+      filtered.sort((a, b) => Number(b.creativity || 0) - Number(a.creativity || 0));
+      break;
+    case "reliabilityDesc":
+      filtered.sort((a, b) => Number(b.reliability || 0) - Number(a.reliability || 0));
+      break;
+    case "salaryAsc":
+      filtered.sort((a, b) => Number(a.salary || 0) - Number(b.salary || 0));
+      break;
+    case "salaryDesc":
+      filtered.sort((a, b) => Number(b.salary || 0) - Number(a.salary || 0));
+      break;
+    default:
+      break;
+  }
+
+  return filtered;
+};
 
 const CrewMarket = () => {
   const dispatch = useDispatch();
+  const filters = useSelector(selectCrewFilters);
+  const { search, rarityFilter, qualityFilter, salaryFilter, sortBy } = filters;
+
+  const setSearch = (value) => dispatch(setCrewFilters({ search: value }));
+  const setRarityFilter = (value) => dispatch(setCrewFilters({ rarityFilter: value }));
+  const setQualityFilter = (value) => dispatch(setCrewFilters({ qualityFilter: value }));
+  const setSalaryFilter = (value) => dispatch(setCrewFilters({ salaryFilter: value }));
+  const setSortBy = (value) => dispatch(setCrewFilters({ sortBy: value }));
+
   const [crewTeams, setCrewTeams] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [rarityFilter, setRarityFilter] = useState("All");
 
   const fetchCrewTeams = useCallback(async () => {
     try {
@@ -45,13 +133,10 @@ const CrewMarket = () => {
     }
   };
 
-  const filteredCrew = useMemo(() => {
-    return crewTeams.filter(crew => {
-      const matchesSearch = crew.name.toLowerCase().includes(search.toLowerCase());
-      const matchesRarity = rarityFilter === "All" || crew.rarity === rarityFilter;
-      return matchesSearch && matchesRarity;
-    });
-  }, [crewTeams, search, rarityFilter]);
+  const filteredCrew = useMemo(
+    () => filterAndSortCrew(crewTeams, search, rarityFilter, qualityFilter, salaryFilter, sortBy),
+    [crewTeams, search, rarityFilter, qualityFilter, salaryFilter, sortBy],
+  );
 
   return (
     <DashboardLayout>
@@ -61,16 +146,14 @@ const CrewMarket = () => {
           <p className="text-slate-400 mt-2">Hire professional production units to bring your movies to life.</p>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="relative flex-1">
-            <input
-              type="text"
-              placeholder="Search crew teams..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-[#111827] border border-slate-800 rounded-xl px-4 py-3 text-white outline-none focus:border-violet-600"
-            />
-          </div>
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+          <input
+            type="text"
+            placeholder="Search crew teams..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full bg-[#111827] border border-slate-800 rounded-xl px-4 py-3 text-white outline-none focus:border-violet-600"
+          />
           <select
             value={rarityFilter}
             onChange={(e) => setRarityFilter(e.target.value)}
@@ -83,13 +166,63 @@ const CrewMarket = () => {
             <option value="EPIC">Epic</option>
             <option value="LEGENDARY">Legendary</option>
           </select>
+          <select
+            value={qualityFilter}
+            onChange={(e) => setQualityFilter(e.target.value)}
+            className="bg-[#111827] border border-slate-800 rounded-xl px-4 py-3 text-white outline-none focus:border-violet-600"
+          >
+            <option value="All">All Quality</option>
+            <option value="Basic">Basic (&lt; 50)</option>
+            <option value="Skilled">Skilled (50-74)</option>
+            <option value="Elite">Elite (75+)</option>
+          </select>
+          <select
+            value={salaryFilter}
+            onChange={(e) => setSalaryFilter(e.target.value)}
+            className="bg-[#111827] border border-slate-800 rounded-xl px-4 py-3 text-white outline-none focus:border-violet-600"
+          >
+            <option value="All">All Salaries</option>
+            <option value="Budget">Budget (&lt; ₹150k)</option>
+            <option value="MidRange">Mid-Range</option>
+            <option value="Premium">Premium (₹400k+)</option>
+          </select>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="bg-[#111827] border border-slate-800 rounded-xl px-4 py-3 text-white outline-none focus:border-violet-600"
+          >
+            <option value="technicalDesc">Technical ↓</option>
+            <option value="qualityDesc">Overall Quality ↓</option>
+            <option value="vfxDesc">VFX ↓</option>
+            <option value="creativityDesc">Creativity ↓</option>
+            <option value="reliabilityDesc">Reliability ↓</option>
+            <option value="salaryAsc">Salary ↑</option>
+            <option value="salaryDesc">Salary ↓</option>
+          </select>
+        </div>
+
+        <div className="flex items-center justify-between text-sm text-slate-400">
+          <span>
+            Showing {filteredCrew.length} of {crewTeams.length} crew teams
+          </span>
+          <button
+            onClick={() => dispatch(resetCrewFilters())}
+            className="font-medium text-violet-400 hover:text-violet-300"
+          >
+            Clear filters
+          </button>
         </div>
 
         {loading ? (
           <div className="text-white text-center py-10">Loading crew teams...</div>
+        ) : filteredCrew.length === 0 ? (
+          <div className="rounded-2xl border border-slate-800 bg-[#111827] p-12 text-center">
+            <h2 className="mb-3 text-2xl font-bold text-white">No Crew Teams</h2>
+            <p className="text-slate-400">No crew teams match your filters.</p>
+          </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredCrew.map((crew, idx) => (
+            {filteredCrew.map((crew) => (
               <div key={crew.id} className="bg-[#111827] border border-slate-800 rounded-2xl p-6 hover:border-violet-600 transition-all group">
                 <div className="flex justify-between items-start mb-4">
                   <h3 className="text-xl font-bold text-white group-hover:text-violet-400 transition-colors">{crew.name}</h3>

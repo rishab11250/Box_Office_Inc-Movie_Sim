@@ -1,8 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
 import api from "../../api/axios";
 import ActorCard from "../../components/actors/ActorCard";
 import DashboardLayout from "../../layouts/DashboardLayout";
+import {
+  selectActorFilters,
+  setActorFilters,
+  resetActorFilters,
+} from "../../features/talent/talentSlice";
 
 const getHitRate = (actor) => {
   const movies = Number(actor.movies || 0);
@@ -146,14 +152,29 @@ const Actors = () => {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
-  const [search, setSearch] = useState("");
-  const [ageFilter, setAgeFilter] = useState("All");
-  const [popularityFilter, setPopularityFilter] = useState("All");
-  const [fanbaseFilter, setFanbaseFilter] = useState("All");
-  const [salaryFilter, setSalaryFilter] = useState("All");
-  const [awardsFilter, setAwardsFilter] = useState("All");
-  const [rarityFilter, setRarityFilter] = useState("All");
-  const [sortBy, setSortBy] = useState("popularityDesc");
+  const dispatch = useDispatch();
+  const filters = useSelector(selectActorFilters);
+  const {
+    search,
+    ageFilter,
+    popularityFilter,
+    fanbaseFilter,
+    salaryFilter,
+    awardsFilter,
+    rarityFilter,
+    sortBy,
+  } = filters;
+
+  // Local setters that patch the persisted slice, preserving the original
+  // call-sites (setSearch(value), setAgeFilter(value), ...).
+  const setSearch = (value) => dispatch(setActorFilters({ search: value }));
+  const setAgeFilter = (value) => dispatch(setActorFilters({ ageFilter: value }));
+  const setPopularityFilter = (value) => dispatch(setActorFilters({ popularityFilter: value }));
+  const setFanbaseFilter = (value) => dispatch(setActorFilters({ fanbaseFilter: value }));
+  const setSalaryFilter = (value) => dispatch(setActorFilters({ salaryFilter: value }));
+  const setAwardsFilter = (value) => dispatch(setActorFilters({ awardsFilter: value }));
+  const setRarityFilter = (value) => dispatch(setActorFilters({ rarityFilter: value }));
+  const setSortBy = (value) => dispatch(setActorFilters({ sortBy: value }));
 
   const fetchMarketActors = useCallback(async () => {
     const res = await api.get("/actors");
@@ -260,14 +281,7 @@ const Actors = () => {
   const currentActors = activeTab === "market" ? filteredMarketActors : filteredOwnedActors;
 
   const clearFilters = () => {
-    setSearch("");
-    setAgeFilter("All");
-    setPopularityFilter("All");
-    setFanbaseFilter("All");
-    setSalaryFilter("All");
-    setAwardsFilter("All");
-    setRarityFilter("All");
-    setSortBy("popularityDesc");
+    dispatch(resetActorFilters());
   };
 
   const renderActors = () => {

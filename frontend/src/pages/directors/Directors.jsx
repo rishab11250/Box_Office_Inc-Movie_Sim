@@ -1,9 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
 import api from "../../api/axios";
 import DirectorCard from "../../components/directors/DirectorCard";
 import DirectingProjectCard from "../../components/directors/DirectingProjectCard";
 import DashboardLayout from "../../layouts/DashboardLayout";
+import {
+  selectDirectorFilters,
+  setDirectorFilters,
+  resetDirectorFilters,
+} from "../../features/talent/talentSlice";
 
 const genres = [
   "Action",
@@ -186,13 +192,25 @@ const Directors = () => {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
-  const [search, setSearch] = useState("");
-  const [selectedGenre, setSelectedGenre] = useState("All");
-  const [ageFilter, setAgeFilter] = useState("All");
-  const [rarityFilter, setRarityFilter] = useState("All");
-  const [reputationFilter, setReputationFilter] = useState("All");
-  const [salaryFilter, setSalaryFilter] = useState("All");
-  const [sortBy, setSortBy] = useState("reputationDesc");
+  const dispatch = useDispatch();
+  const filters = useSelector(selectDirectorFilters);
+  const {
+    search,
+    selectedGenre,
+    ageFilter,
+    rarityFilter,
+    reputationFilter,
+    salaryFilter,
+    sortBy,
+  } = filters;
+
+  const setSearch = (value) => dispatch(setDirectorFilters({ search: value }));
+  const setSelectedGenre = (value) => dispatch(setDirectorFilters({ selectedGenre: value }));
+  const setAgeFilter = (value) => dispatch(setDirectorFilters({ ageFilter: value }));
+  const setRarityFilter = (value) => dispatch(setDirectorFilters({ rarityFilter: value }));
+  const setReputationFilter = (value) => dispatch(setDirectorFilters({ reputationFilter: value }));
+  const setSalaryFilter = (value) => dispatch(setDirectorFilters({ salaryFilter: value }));
+  const setSortBy = (value) => dispatch(setDirectorFilters({ sortBy: value }));
   const [startModalDirector, setStartModalDirector] = useState(null);
   const [selectedScriptId, setSelectedScriptId] = useState("");
 
@@ -402,13 +420,7 @@ const Directors = () => {
         : directingProjects.length;
 
   const clearFilters = () => {
-    setSearch("");
-    setSelectedGenre("All");
-    setAgeFilter("All");
-    setRarityFilter("All");
-    setReputationFilter("All");
-    setSalaryFilter("All");
-    setSortBy("reputationDesc");
+    dispatch(resetDirectorFilters());
   };
 
   const renderProjects = () => {

@@ -1,4 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  selectWriterFilters,
+  setWriterFilters,
+  resetWriterFilters,
+} from "../../features/talent/talentSlice";
 
 import api from "../../api/axios";
 import DashboardLayout from "../../layouts/DashboardLayout";
@@ -110,11 +116,15 @@ const Writers = () => {
   const [genre, setGenre] = useState("Action");
   const [targetAudience, setTargetAudience] = useState("Mass");
 
-  const [search, setSearch] = useState("");
-  const [selectedGenre, setSelectedGenre] = useState("All");
-  const [ageFilter, setAgeFilter] = useState("All");
-  const [rarityFilter, setRarityFilter] = useState("All");
-  const [sortBy, setSortBy] = useState("salaryDesc");
+  const dispatch = useDispatch();
+  const filters = useSelector(selectWriterFilters);
+  const { search, selectedGenre, ageFilter, rarityFilter, sortBy } = filters;
+
+  const setSearch = (value) => dispatch(setWriterFilters({ search: value }));
+  const setSelectedGenre = (value) => dispatch(setWriterFilters({ selectedGenre: value }));
+  const setAgeFilter = (value) => dispatch(setWriterFilters({ ageFilter: value }));
+  const setRarityFilter = (value) => dispatch(setWriterFilters({ rarityFilter: value }));
+  const setSortBy = (value) => dispatch(setWriterFilters({ sortBy: value }));
 
   const [showFireModal, setShowFireModal] = useState(false);
   const [fireWriterData, setFireWriterData] = useState(null);
@@ -492,11 +502,7 @@ const Writers = () => {
           </span>
           <button
             onClick={() => {
-              setSearch("");
-              setSelectedGenre("All");
-              setAgeFilter("All");
-              setRarityFilter("All");
-              setSortBy("salaryDesc");
+              dispatch(resetWriterFilters());
             }}
             className="text-violet-400 hover:text-violet-300 font-medium"
           >
