@@ -1021,6 +1021,85 @@ const gameStateSchema = new mongoose.Schema(
       },
     ],
 
+    // -----------------------------------------------------------------------
+    // AI Rival Studios
+    // -----------------------------------------------------------------------
+    rivalStudiosInitialized: {
+      type: Boolean,
+      default: false,
+    },
+
+    rivalStudios: [
+      {
+        id: String,
+
+        name: String,
+
+        // Drives AI decision-making style
+        personality: {
+          type: String,
+          enum: ["BLOCKBUSTER", "PRESTIGE", "INDIE", "COMMERCIAL", "CHAOTIC"],
+          default: "COMMERCIAL",
+        },
+
+        money: {
+          type: Number,
+          default: 5000000,
+        },
+
+        prestige: {
+          type: Number,
+          default: 0,
+        },
+
+        fans: {
+          type: Number,
+          default: 0,
+        },
+
+        level: {
+          type: Number,
+          default: 1,
+        },
+
+        // Movies currently in production (simplified — no full talent pipeline)
+        activeMovies: [
+          {
+            id: String,
+            title: String,
+            genre: String,
+            budget: Number,
+            quality: Number,       // 0-100, determines box office
+            weeksRemaining: Number,
+            totalWeeks: Number,
+          },
+        ],
+
+        // Completed releases
+        movieHistory: [
+          {
+            id: String,
+            title: String,
+            genre: String,
+            budget: Number,
+            boxOffice: Number,
+            profit: Number,
+            verdict: String,
+            releaseWeek: Number,
+          },
+        ],
+
+        stats: {
+          moviesReleased: { type: Number, default: 0 },
+          hits: { type: Number, default: 0 },
+          blockbusters: { type: Number, default: 0 },
+          flops: { type: Number, default: 0 },
+          totalRevenue: { type: Number, default: 0 },
+          totalFansEarned: { type: Number, default: 0 },
+        },
+      },
+    ],
+
     // Market Trends Engine state. Tracks the active box-office climate.
     marketTrends: {
       activeTrends: [

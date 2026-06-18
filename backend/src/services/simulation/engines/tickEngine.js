@@ -5,7 +5,7 @@ import { processProduction } from "./productionEngine.js";
 import { processWriterPayroll } from "./payrollEngine.js";
 import { processWritingProjects } from "./writerEngine.js";
 import { processMarketTrends } from "./trendEngine.js";
-import { processRandomEvents } from "./eventEngine.js";
+import { generateRivalStudios, processRivalStudios } from "./rivalStudioEngine.js";
 
 import { addNotification } from "../helpers/notificationHelper.js";
 import { processWriterAging } from "../helpers/agingHelper.js";
@@ -51,6 +51,9 @@ import { processWriterAging } from "../helpers/agingHelper.js";
  * @returns {Promise<object>}   The mutated `gameState` after all engines have run.
  */
 export const processWeeklyTick = async (gameState, studio) => {
+  // Initialize rival studios on the very first tick (once per game)
+  generateRivalStudios(gameState);
+
   // Advance the market climate first so any releases this tick reflect the
   // current week's active trends.
   const trendMessages = processMarketTrends(gameState);
@@ -64,17 +67,18 @@ export const processWeeklyTick = async (gameState, studio) => {
 
   await processProduction(gameState, studio);
 
+  // Tick rival studios — collect their releases for the weekly summary
+  const rivalReleases = processRivalStudios(gameState);
+
   processWriterAging(gameState);
 
   processDirectorAging(gameState);
 
   processDirectorAwards(gameState, studio);
 
-  // Roll for global random industry events last, so they react to the week's
-  // activity and can adjust studio money/fans/prestige before persistence.
-  processRandomEvents(gameState, studio);
-
-  return gameState;
+  return { gameState, rivalReleases };
 };
 
+
 export default processWeeklyTick;
+

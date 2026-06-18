@@ -65,6 +65,7 @@
  * @returns {{ fanGain: number, prestigeGain: number }} Actual deltas applied.
  */
 import { addNotification } from "../helpers/notificationHelper.js";
+import { computeMarketSharePenalty } from "./rivalStudioEngine.js";
 
 export const processStudioGrowth = (gameState, studio, movie) => {
   const isHit = movie.verdict === "HIT";
@@ -96,7 +97,12 @@ export const processStudioGrowth = (gameState, studio, movie) => {
   // Fan Growth: Audience Score, Box Office, Verdict
   const audienceScoreFactor = movie.audienceScore / 100;
   const verdictMultiplier = isSuccess ? 2 : isFailure ? 0.5 : 1;
-  const fanGain = Math.round((movie.worldwideGross / 1000) * audienceScoreFactor * verdictMultiplier);
+  let fanGain = Math.round((movie.worldwideGross / 1000) * audienceScoreFactor * verdictMultiplier);
+
+  // Apply market-share pressure from rival studios (reduces fanGain when rivals dominate)
+  const marketPenalty = computeMarketSharePenalty(gameState, studio.fans || 0);
+  fanGain = Math.round(fanGain * marketPenalty);
+
   studio.fans = (studio.fans || 0) + fanGain;
 
   // Prestige Growth: Critic Score, Verdict, Quality
@@ -138,5 +144,14 @@ export const processStudioGrowth = (gameState, studio, movie) => {
     addNotification(gameState, `Congratulations! Studio leveled up to ${studio.studioLevel}!`);
   }
 
-  return { fanGain, prestigeGain };
+  // Notify player when rivals are heavily suppressing growth
+  if (marketPenalty < 0.75) {
+    addNotification(
+      gameState,
+      `📉 Market competition is fierce! Rival studios are absorbing audience attention — your fan growth was reduced to ${Math.round(marketPenalty * 100)}% efficiency.`
+    );
+  }
+
+  return { fanGain, prestigeGain, marketPenalty };
 };
+

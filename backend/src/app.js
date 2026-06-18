@@ -59,6 +59,7 @@ import crewRoutes from "./routes/crewRoutes.js";
 import movieRoutes from "./routes/movieRoutes.js";
 import simulationRoutes from "./routes/simulationRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
+import rivalStudioRoutes from "./routes/rivalStudioRoutes.js";
 
 app.use("/api/auth", authRoutes);
 app.use("/api/scripts", scriptRoutes);
@@ -69,6 +70,7 @@ app.use("/api/crew", crewRoutes);
 app.use("/api/movies", movieRoutes);
 app.use("/api/simulation", simulationRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/rival-studios", rivalStudioRoutes);
 
 app.use((req, res) => {
   res.status(404).json({
