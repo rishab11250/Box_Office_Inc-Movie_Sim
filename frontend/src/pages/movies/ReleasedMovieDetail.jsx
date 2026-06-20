@@ -67,30 +67,48 @@ const ReleasedMovieDetail = () => {
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
-            {/* Box Office Cards */}
+            {/* Box Office / Deal Cards */}
             <div className="lg:col-span-1 space-y-6">
                 <div className="bg-[#111827] border border-slate-800 rounded-3xl p-8 space-y-6">
                     <h3 className="text-xl font-bold text-white uppercase italic flex items-center gap-2 border-b border-slate-800 pb-4">
-                        <TrendingUp className="text-violet-500" /> Box Office
+                        <TrendingUp className="text-violet-500" /> {movie.releaseType === 'STREAMING' ? 'Streaming Deal' : 'Box Office'}
                     </h3>
-                    <div className="space-y-6">
-                        <div>
-                            <div className="text-slate-500 text-[10px] font-bold uppercase mb-1">Opening Weekend</div>
-                            <div className="text-2xl font-bold text-white">₹{movie.openingWeekend?.toLocaleString()}</div>
-                        </div>
-                        <div>
-                            <div className="text-slate-500 text-[10px] font-bold uppercase mb-1">Domestic Gross</div>
-                            <div className="text-2xl font-bold text-white">₹{movie.domesticGross?.toLocaleString()}</div>
-                        </div>
-                        <div>
-                            <div className="text-slate-500 text-[10px] font-bold uppercase mb-1">International Gross</div>
-                            <div className="text-2xl font-bold text-white">₹{movie.internationalGross?.toLocaleString()}</div>
-                        </div>
-                        <div className="pt-4 border-t border-slate-800">
-                            <div className="text-slate-500 text-[10px] font-bold uppercase mb-1">Worldwide Gross</div>
-                            <div className="text-3xl font-black text-violet-400">₹{movie.worldwideGross?.toLocaleString()}</div>
-                        </div>
-                    </div>
+                    
+                    {movie.releaseType === 'STREAMING' ? (
+                      <div className="space-y-6">
+                          <div>
+                              <div className="text-slate-500 text-[10px] font-bold uppercase mb-1">Platform ID</div>
+                              <div className="text-2xl font-bold text-white uppercase">{movie.streamingDeal?.platformId}</div>
+                          </div>
+                          <div>
+                              <div className="text-slate-500 text-[10px] font-bold uppercase mb-1">Exclusivity</div>
+                              <div className="text-2xl font-bold text-white">{movie.streamingDeal?.exclusiveWeeks} Weeks</div>
+                          </div>
+                          <div className="pt-4 border-t border-slate-800">
+                              <div className="text-slate-500 text-[10px] font-bold uppercase mb-1">Deal Value</div>
+                              <div className="text-3xl font-black text-blue-400">₹{movie.streamingDeal?.dealValue?.toLocaleString()}</div>
+                          </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-6">
+                          <div>
+                              <div className="text-slate-500 text-[10px] font-bold uppercase mb-1">Opening Weekend</div>
+                              <div className="text-2xl font-bold text-white">₹{movie.openingWeekend?.toLocaleString()}</div>
+                          </div>
+                          <div>
+                              <div className="text-slate-500 text-[10px] font-bold uppercase mb-1">Domestic Gross</div>
+                              <div className="text-2xl font-bold text-white">₹{movie.domesticGross?.toLocaleString()}</div>
+                          </div>
+                          <div>
+                              <div className="text-slate-500 text-[10px] font-bold uppercase mb-1">International Gross</div>
+                              <div className="text-2xl font-bold text-white">₹{movie.internationalGross?.toLocaleString()}</div>
+                          </div>
+                          <div className="pt-4 border-t border-slate-800">
+                              <div className="text-slate-500 text-[10px] font-bold uppercase mb-1">Worldwide Gross</div>
+                              <div className="text-3xl font-black text-violet-400">₹{movie.worldwideGross?.toLocaleString()}</div>
+                          </div>
+                      </div>
+                    )}
                 </div>
             </div>
 

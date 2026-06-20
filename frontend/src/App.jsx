@@ -21,6 +21,7 @@ import MovieLibrary from "./pages/movies/MovieLibrary";
 import ReleasedMovieDetail from "./pages/movies/ReleasedMovieDetail";
 import ProductionQueue from "./pages/movies/ProductionQueue";
 import MovieComparison from "./pages/movies/MovieComparison";
+import StreamingDeals from "./pages/movies/StreamingDeals";
 import StudioStats from "./pages/studio/StudioStats";
 import FinancialHistory from "./pages/studio/FinancialHistory";
 import Franchises from "./pages/studio/Franchises";
@@ -69,6 +70,14 @@ function App() {
           element={
             <ProtectedRoute>
               <ReleaseResult />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/movies/:id/streaming-deals"
+          element={
+            <ProtectedRoute>
+              <StreamingDeals />
             </ProtectedRoute>
           }
         />

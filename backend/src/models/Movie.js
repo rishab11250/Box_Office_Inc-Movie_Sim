@@ -33,8 +33,16 @@ const movieSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["PLANNING", "PRE_PRODUCTION", "PRODUCTION", "POST_PRODUCTION", "READY_FOR_RELEASE", "RELEASED"],
+      enum: ["PLANNING", "PRE_PRODUCTION", "PRODUCTION", "POST_PRODUCTION", "READY_FOR_RELEASE", "RELEASED", "RELEASED_STREAMING"],
       default: "PLANNING",
+    },
+
+    releaseType: { type: String, enum: ['THEATRICAL', 'STREAMING'], default: 'THEATRICAL' },
+    streamingDeal: {
+      platformId: String,
+      dealValue: Number,
+      exclusiveWeeks: Number,
+      status: { type: String, enum: ['OFFERED', 'ACCEPTED', 'REJECTED'] }
     },
 
     createdWeek: { type: Number, required: true },

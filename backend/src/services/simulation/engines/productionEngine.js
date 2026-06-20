@@ -1,5 +1,6 @@
 import Movie from "../../../models/Movie.js";
 import { addNotification } from "../helpers/notificationHelper.js";
+import { generateStreamingOffers } from "./streamingEngine.js";
 
 const STAGES = {
   PRE_PRODUCTION: { duration: 4, next: "PRODUCTION" },
@@ -71,6 +72,9 @@ export const processProduction = async (gameState, studio) => {
       if (movie.status === "READY_FOR_RELEASE") {
         movie.productionProgress = 100;
         movie.releaseWeek = gameState.currentWeek + 1; // Suggest release next week
+
+        // Generate streaming offers
+        await generateStreamingOffers(movie, gameState);
 
         // Release talent if ready for release (or keep them busy until release?)
         // Instructions say: "When movie finishes: status = AVAILABLE"

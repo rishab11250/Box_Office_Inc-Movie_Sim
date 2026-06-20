@@ -1040,6 +1040,22 @@ const gameStateSchema = new mongoose.Schema(
         default: {},
       },
     },
+
+    streamingPlatforms: [
+      {
+        id: String,
+        name: String,
+        popularity: Number,
+        contentBudget: Number,
+        subscribers: Number,
+        exclusiveMovies: [
+          {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Movie",
+          },
+        ],
+      },
+    ],
   },
   {
     timestamps: true,

@@ -1,4 +1,4 @@
-﻿import { processDirectorAwards } from "../../director/directorAwardsService.js";
+import { processDirectorAwards } from "../../director/directorAwardsService.js";
 import { processDirectorAging } from "./directorEngine.js";
 import { processDirectingProjects } from "./directingProjectEngine.js";
 import { processProduction } from "./productionEngine.js";
@@ -6,6 +6,7 @@ import { processWriterPayroll } from "./payrollEngine.js";
 import { processWritingProjects } from "./writerEngine.js";
 import { processMarketTrends } from "./trendEngine.js";
 import { processRandomEvents } from "./eventEngine.js";
+import { processStreamingPlatformGrowth } from "./streamingEngine.js";
 
 import { addNotification } from "../helpers/notificationHelper.js";
 import { processWriterAging } from "../helpers/agingHelper.js";
@@ -33,6 +34,8 @@ export const processWeeklyTick = async (gameState, studio) => {
   // Roll for global random industry events last, so they react to the week's
   // activity and can adjust studio money/fans/prestige before persistence.
   processRandomEvents(gameState, studio);
+
+  await processStreamingPlatformGrowth(gameState);
 
   return gameState;
 };
