@@ -1,6 +1,7 @@
 import GameState from "../models/GameState.js";
 import Studio from "../models/Studio.js";
 import { runWeeklySimulation } from "../services/simulation/runWeeklySimulation.js";
+import Notification from "../models/Notification.js";
 
 export const simulateWeek = async (req, res) => {
   try {
@@ -17,7 +18,9 @@ export const simulateWeek = async (req, res) => {
     const startWeek = gameState.currentWeek;
     const startFans = studio.fans || 0;
     const startPrestige = studio.prestige || 0;
-    const initialNotificationCount = (gameState.notifications || []).length;
+
+    // Accumulate notifications generated during the simulation ticks
+    let newNotifications = [];
 
     // Accumulate rival releases across all simulated weeks
     const allRivalReleases = [];
@@ -46,6 +49,16 @@ export const simulateWeek = async (req, res) => {
       if (studio.financialHistory.length > 100) {
           studio.financialHistory.shift();
       }
+      if (gameState._pendingNotifications && gameState._pendingNotifications.length > 0) {
+        newNotifications.push(...gameState._pendingNotifications);
+        gameState._pendingNotifications = [];
+      }
+    }
+
+    if (newNotifications.length > 0) {
+      const inserted = await Notification.insertMany(newNotifications);
+      // Replace with DB records to get the assigned _ids, though not strictly necessary for the summary
+      newNotifications = inserted;
     }
 
     await studio.save();
@@ -53,7 +66,6 @@ export const simulateWeek = async (req, res) => {
 
     const endFans = studio.fans || 0;
     const endPrestige = studio.prestige || 0;
-    const newNotifications = (gameState.notifications || []).slice(initialNotificationCount);
 
     // Summary data — include rival releases for the frontend modal
     const summary = {

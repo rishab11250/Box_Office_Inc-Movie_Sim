@@ -9,6 +9,7 @@ import { processStudioGrowth } from "../services/simulation/engines/studioGrowth
 import { addNotification } from "../services/simulation/helpers/notificationHelper.js";
 import { MARKETING_CAMPAIGNS } from "../constants/marketingCampaigns.js";
 import { generateMovieTitle } from "../services/movie/movieService.js";
+import Notification from "../models/Notification.js";
 
 const findGameState = async (userId) => GameState.findOne({ user: userId });
 
@@ -220,7 +221,8 @@ export const createMovie = async (req, res) => {
 
     gameState.activeMovies.push(movie._id);
 
-    gameState.notifications.push({
+    await Notification.create({
+        gameStateId: gameState._id,
         message: `Production started for "${title}". Quality: ${quality}, Hype: ${hype}`,
         createdAt: new Date()
     });
