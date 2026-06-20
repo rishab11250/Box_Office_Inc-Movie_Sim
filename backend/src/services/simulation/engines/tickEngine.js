@@ -6,6 +6,8 @@ import { processWriterPayroll } from "./payrollEngine.js";
 import { processWritingProjects } from "./writerEngine.js";
 import { processMarketTrends } from "./trendEngine.js";
 import { generateRivalStudios, processRivalStudios } from "./rivalStudioEngine.js";
+import { processProductionEvents } from "./eventEngine.js";
+import { processRandomEvents } from "./eventEngine.js";
 
 import { addNotification } from "../helpers/notificationHelper.js";
 import { processWriterAging } from "../helpers/agingHelper.js";
@@ -75,6 +77,13 @@ export const processWeeklyTick = async (gameState, studio) => {
   processDirectorAging(gameState);
 
   processDirectorAwards(gameState, studio);
+
+  // 9. Production events — movie-level crises & opportunities.
+  await processProductionEvents(gameState, studio);
+
+  // 10. Random events — global industry events last so they react to the
+  //     week's financial activity.
+  processRandomEvents(gameState, studio);
 
   return { gameState, rivalReleases };
 };

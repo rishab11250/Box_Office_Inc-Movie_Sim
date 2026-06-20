@@ -57,6 +57,15 @@ const movieSchema = new mongoose.Schema(
 
     // Track weeks in each stage
     weeksInStage: { type: Number, default: 0 },
+
+    // Production event tracking
+    delayWeeks: { type: Number, default: 0 },
+    events: [{
+      eventId: String,
+      label: String,
+      message: String,
+      week: Number,
+    }],
   },
   { timestamps: true }
 );

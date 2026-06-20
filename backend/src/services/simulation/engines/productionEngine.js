@@ -81,6 +81,16 @@ export const processProduction = async (gameState, studio) => {
     const stageInfo = STAGES[movie.status];
     if (!stageInfo) continue;
 
+    // --- Production event delays ---
+    // If a production event (e.g. actor injury, script rewrite) has imposed
+    // delay weeks, decrement the counter and skip normal progress this tick.
+    if ((movie.delayWeeks || 0) > 0) {
+      movie.delayWeeks -= 1;
+      addNotification(gameState, `Production on "${movie.title}" is delayed (${movie.delayWeeks} week(s) remaining).`);
+      await movie.save();
+      continue;
+    }
+
     // Get talent for reliability effects
     const director = gameState.ownedDirectors.find(d => d.id === movie.directorId);
     const leadActor = gameState.ownedActors.find(a => a.id === movie.leadActorId);
