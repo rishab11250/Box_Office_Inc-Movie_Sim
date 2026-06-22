@@ -23,6 +23,7 @@ import ProductionQueue from "./pages/movies/ProductionQueue";
 import MovieComparison from "./pages/movies/MovieComparison";
 import StudioStats from "./pages/studio/StudioStats";
 import FinancialHistory from "./pages/studio/FinancialHistory";
+import Franchises from "./pages/studio/Franchises";
 import TalentProfile from "./pages/talent/TalentProfile";
 import DirectorProfile from "./pages/directors/DirectorProfile";
 import WriterProfile from "./pages/writers/WriterProfile";
@@ -30,6 +31,7 @@ import Notifications from "./pages/notifications/Notifications";
 import Settings from "./pages/settings/Settings";
 import AuthMonitoring from "./pages/auth/AuthMonitoring";
 import Toast from "./components/common/Toast";
+import RivalStudios from "./pages/rivals/RivalStudios";
 
 function App() {
   return (
@@ -44,6 +46,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/rivals"
+          element={
+            <ProtectedRoute>
+              <RivalStudios />
             </ProtectedRoute>
           }
         />
@@ -213,6 +223,14 @@ function App() {
           element={
             <ProtectedRoute>
               <FinancialHistory />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/studio/franchises"
+          element={
+            <ProtectedRoute>
+              <Franchises />
             </ProtectedRoute>
           }
         />
