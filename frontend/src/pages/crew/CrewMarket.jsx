@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import api from "../../api/axios";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import { showToast } from "../../features/ui/toastSlice";
+import { STANDARD_CONTRACT_WEEKS, getTotalSalary } from "../../config/contract";
 import {
   selectCrewFilters,
   setCrewFilters,
@@ -254,7 +255,13 @@ const CrewMarket = () => {
                 </div>
 
                 <div className="flex items-center justify-between mt-auto">
-                  <div className="text-violet-400 font-bold">₹{crew.salary.toLocaleString()}/wk</div>
+                  <div>
+                    <div className="text-violet-400 font-bold">₹{crew.salary.toLocaleString()}/wk</div>
+                    <div className="text-xs text-slate-400">
+                      Total ₹{getTotalSalary(crew.salary, STANDARD_CONTRACT_WEEKS).toLocaleString()}
+                      <span className="ml-1">({STANDARD_CONTRACT_WEEKS}w)</span>
+                    </div>
+                  </div>
                   <button
                     disabled={actionLoading}
                     onClick={() => handleHire(crew.id)}
