@@ -14,6 +14,7 @@ import {
   IndianRupee,
   X,
   Swords,
+  Trophy,
 } from "lucide-react";
 
 import { Link, useLocation } from "react-router-dom";
@@ -31,6 +32,11 @@ const Sidebar = ({ isOpen, onClose }) => {
       name: "Rival Studios",
       path: "/rivals",
       icon: Swords,
+    },
+    {
+      name: "Leaderboard",
+      path: "/leaderboard",
+      icon: Trophy,
     },
     {
       name: "Movies",
