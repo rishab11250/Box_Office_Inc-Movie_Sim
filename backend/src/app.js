@@ -29,7 +29,19 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(cookieParser());
+import rateLimit from "express-rate-limit";
 
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: {
+    success: false,
+    message: "Too many requests, please try again later."
+  }
+});
+
+// Apply the rate limiter to all API routes
+app.use("/api", limiter);
 /*
 |--------------------------------------------------------------------------
 | Health Route
