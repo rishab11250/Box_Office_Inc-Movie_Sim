@@ -29,7 +29,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use(cookieParser());
+// ... existing imports
+import cookieParser from "cookie-parser";
+import compression from "compression"; // 1. Add this import
 
+const app = express();
+
+// ... existing middleware
+app.use(cookieParser());
+app.use(compression()); // 2. Add this middleware
 /*
 |--------------------------------------------------------------------------
 | Health Route
