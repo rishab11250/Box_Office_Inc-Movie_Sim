@@ -1,5 +1,7 @@
 import express from "express";
 import { protect } from "../middleware/authMiddleware.js";
+import { validate } from "../middleware/validationMiddleware.js";
+import { createMovieSchema, releaseMovieSchema } from "../validators/movieValidator.js";
 import {
   createMovie,
   getActiveMovies,
@@ -8,16 +10,15 @@ import {
   getMovieDetails,
   generateTitle,
 } from "../controllers/movieController.js";
-import { validateRequest } from "../middleware/validationMiddleware.js";
-import { createMovieSchema } from "../validators/movieValidators.js";
+
 
 const router = express.Router();
 
-router.post("/", protect, validateRequest(createMovieSchema), createMovie);
+router.post("/", protect, validate(createMovieSchema), createMovie);
 router.get("/generate-title", protect, generateTitle);
 router.get("/active", protect, getActiveMovies);
 router.get("/released", protect, getReleasedMovies);
-router.post("/:id/release", protect, releaseMovie);
+router.post("/:id/release", protect, validate(releaseMovieSchema), releaseMovie);
 router.get("/:id", protect, getMovieDetails);
 
 export default router;

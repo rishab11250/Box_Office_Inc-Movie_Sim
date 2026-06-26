@@ -59,7 +59,11 @@ import crewRoutes from "./routes/crewRoutes.js";
 import movieRoutes from "./routes/movieRoutes.js";
 import simulationRoutes from "./routes/simulationRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
+<<<<<<< HEAD
 import { errorHandler } from "./middleware/errorMiddleware.js";
+=======
+import errorHandler from "./middleware/errorMiddleware.js";
+>>>>>>> origin/feature/issue-44-input-validation
 import franchiseRoutes from "./routes/franchiseRoutes.js";
 import streamingRoutes from "./routes/streamingRoutes.js";
 import rivalStudioRoutes from "./routes/rivalStudioRoutes.js";

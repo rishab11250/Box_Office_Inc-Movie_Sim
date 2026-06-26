@@ -1,19 +1,24 @@
-export const validateRequest = (schema) => (req, res, next) => {
-  try {
-    schema.parse(req.body);
-    next();
-  } catch (error) {
-    if (error.name === "ZodError") {
-      const errors = error.errors.map((e) => ({
-        path: e.path.join("."),
-        message: e.message,
-      }));
-      return res.status(400).json({
-        success: false,
-        message: "Validation Error",
-        errors,
-      });
+/**
+ * @fileoverview Validation Middleware Factory using Zod
+ */
+
+export const validate = (schemas) => {
+  return async (req, res, next) => {
+    try {
+      if (schemas.body) {
+        req.body = await schemas.body.parseAsync(req.body);
+      }
+      if (schemas.query) {
+        req.query = await schemas.query.parseAsync(req.query);
+      }
+      if (schemas.params) {
+        req.params = await schemas.params.parseAsync(req.params);
+      }
+      next();
+    } catch (error) {
+      next(error);
     }
-    next(error);
-  }
+  };
 };
+
+export default validate;
