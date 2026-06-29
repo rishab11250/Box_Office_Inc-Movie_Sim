@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 import { Link, useLocation } from "react-router-dom";
+import ThemeToggle from "./ThemeToggle";
 
 const Sidebar = ({ isOpen, onClose }) => {
   const location = useLocation();
@@ -207,6 +208,9 @@ const Sidebar = ({ isOpen, onClose }) => {
             );
           })}
         </nav>
+        <div className="mt-auto pt-4 border-t" style={{ borderColor: "var(--border)" }}>
+          <ThemeToggle />
+        </div>
       </aside>
     </>
   );
