@@ -259,6 +259,12 @@ export const startWritingProject = async (req, res) => {
     user: req.user._id,
   });
 
+  if (!gameState) {
+    return res.status(404).json({
+      message: "Game state not found",
+    });
+  }
+
   const writer = gameState.ownedWriters.find((w) => w.id === writerId);
 
   if (!writer) {
@@ -312,6 +318,12 @@ export const getWritingProjects = async (req, res) => {
   const gameState = await GameState.findOne({
     user: req.user._id,
   });
+
+  if (!gameState) {
+    return res.status(404).json({
+      message: "Game state not found",
+    });
+  }
 
   res.status(200).json({
     projects: gameState.activeWritingProjects,
