@@ -320,7 +320,7 @@ const Writers = () => {
           <WriterCard
             key={writer.id}
             writer={writer}
-            index={marketWriters.findIndex((w) => w.id === writer.id)}
+            index={writer.id}
             mode="market"
             onHire={handleHire}
           />
@@ -347,14 +347,9 @@ const Writers = () => {
           <WriterCard
             key={writer.id}
             writer={writer}
-            index={ownedWriters.findIndex((w) => w.id === writer.id)}
+            index={writer.id}
             mode="owned"
-            onFire={() =>
-              openFireModal(
-                writer,
-                ownedWriters.findIndex((w) => w.id === writer.id),
-              )
-            }
+            onFire={() => openFireModal(writer, writer.id)}
             onStartWriting={openWritingModal}
           />
         ))}
