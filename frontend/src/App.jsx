@@ -24,6 +24,7 @@ import MovieComparison from "./pages/movies/MovieComparison";
 import StreamingDeals from "./pages/movies/StreamingDeals";
 import StudioStats from "./pages/studio/StudioStats";
 import FinancialHistory from "./pages/studio/FinancialHistory";
+import AwardsHistory from "./pages/studio/AwardsHistory";
 import MarketDashboard from "./pages/dashboard/MarketDashboard";
 import Franchises from "./pages/studio/Franchises";
 import FranchiseDetail from "./pages/studio/FranchiseDetail";
@@ -37,6 +38,8 @@ import AuthMonitoring from "./pages/auth/AuthMonitoring";
 import NewsFeed from "./pages/news/NewsFeed";
 import Toast from "./components/common/Toast";
 import RivalStudios from "./pages/rivals/RivalStudios";
+import TrophyRoom from "./pages/awards/TrophyRoom";
+import AwardsSeasonDashboard from "./pages/awards/AwardsSeasonDashboard";
 
 function App() {
   return (
@@ -248,6 +251,14 @@ function App() {
           }
         />
         <Route
+          path="/studio/awards"
+          element={
+            <ProtectedRoute>
+              <AwardsHistory />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/market"
           element={
             <ProtectedRoute>
@@ -302,6 +313,24 @@ function App() {
           element={
             <ProtectedRoute>
               <Settings />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/awards/trophy-room"
+          element={
+            <ProtectedRoute>
+              <TrophyRoom />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/awards/season"
+          element={
+            <ProtectedRoute>
+              <AwardsSeasonDashboard />
             </ProtectedRoute>
           }
         />

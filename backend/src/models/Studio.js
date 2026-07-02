@@ -64,7 +64,8 @@ const studioSchema = new mongoose.Schema(
         totalRevenue: { type: Number, default: 0 },
         totalProfit: { type: Number, default: 0 },
         avgCriticScore: { type: Number, default: 0 },
-        avgAudienceScore: { type: Number, default: 0 }
+        avgAudienceScore: { type: Number, default: 0 },
+        awardsWon: { type: Number, default: 0 }
     },
 
     financialHistory: [{

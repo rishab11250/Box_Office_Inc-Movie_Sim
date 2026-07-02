@@ -121,6 +121,11 @@ const Sidebar = ({ isOpen, onClose }) => {
       icon: IndianRupee,
     },
     {
+      name: "Awards History",
+      path: "/studio/awards",
+      icon: Trophy,
+    },
+    {
       name: "Franchises",
       path: "/studio/franchises",
       icon: Layers,

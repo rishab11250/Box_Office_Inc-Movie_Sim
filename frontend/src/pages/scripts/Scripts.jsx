@@ -1,16 +1,28 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 import api from "../../api/axios";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import SkeletonGrid from "../../components/common/SkeletonGrid";
+
+const RARITY_OPTIONS = ["All", "Common", "Uncommon", "Rare", "Epic", "Legendary"];
 
 const Scripts = () => {
   const [scripts, setScripts] = useState([]);
   const [ownedScripts, setOwnedScripts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("market");
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Derive tab and rarity from URL so back-navigation restores them
+  const activeTab = searchParams.get("tab") || "market";
+  const rarityFilter = searchParams.get("rarity") || "All";
+
+  const setActiveTab = (tab) =>
+    setSearchParams((prev) => { prev.set("tab", tab); return prev; });
+
+  const setRarityFilter = (rarity) =>
+    setSearchParams((prev) => { prev.set("rarity", rarity); return prev; });
 
   const renderWriterName = (script) => {
     const writerName = script.writer || "Unknown Writer";
@@ -110,6 +122,12 @@ const Scripts = () => {
       );
     }
 
+    // Apply rarity filter — persisted in URL so back-navigation restores it
+    const filteredScripts =
+      rarityFilter === "All"
+        ? scripts
+        : scripts.filter((s) => s.rarity === rarityFilter);
+
     const rarityStyles = {
       Common: "bg-slate-500/20 text-slate-300 border border-slate-500/30",
 
@@ -132,8 +150,32 @@ const Scripts = () => {
     };
 
     return (
-      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
-        {scripts.map((script, index) => (
+      <>
+        {/* Rarity Filter Bar */}
+        <div className="flex flex-wrap gap-2 mb-5">
+          {RARITY_OPTIONS.map((r) => (
+            <button
+              key={r}
+              id={`rarity-filter-${r.toLowerCase()}`}
+              onClick={() => setRarityFilter(r)}
+              className={`px-4 py-2 rounded-xl text-sm font-semibold transition ${
+                rarityFilter === r
+                  ? "bg-violet-600 text-white"
+                  : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+              }`}
+            >
+              {r}
+            </button>
+          ))}
+        </div>
+
+        {filteredScripts.length === 0 ? (
+          <div className="bg-[#111827] border border-slate-800 rounded-2xl p-8 text-center">
+            <p className="text-slate-400">No {rarityFilter} scripts in the market right now.</p>
+          </div>
+        ) : (
+        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5">
+          {filteredScripts.map((script, index) => (
           <div
             key={`${script.title}-${index}`}
             className={`group relative overflow-hidden
@@ -211,8 +253,10 @@ const Scripts = () => {
               </button>
             </div>
           </div>
-        ))}
-      </div>
+          ))}
+        </div>
+        )}
+      </>
     );
   };
 
