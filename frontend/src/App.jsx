@@ -24,6 +24,7 @@ import MovieComparison from "./pages/movies/MovieComparison";
 import StreamingDeals from "./pages/movies/StreamingDeals";
 import StudioStats from "./pages/studio/StudioStats";
 import FinancialHistory from "./pages/studio/FinancialHistory";
+import MerchDashboard from "./pages/merch/MerchDashboard";
 import AwardsHistory from "./pages/studio/AwardsHistory";
 import MarketDashboard from "./pages/dashboard/MarketDashboard";
 import Franchises from "./pages/studio/Franchises";
@@ -247,6 +248,14 @@ function App() {
           element={
             <ProtectedRoute>
               <FinancialHistory />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/studio/merchandise"
+          element={
+            <ProtectedRoute>
+              <MerchDashboard />
             </ProtectedRoute>
           }
         />
