@@ -1,4 +1,6 @@
 import { processDirectorAwards } from "../../director/directorAwardsService.js";
+import { processActorAwards } from "../../actor/actorAwardsService.js";
+import { processCrewProgression } from "../../crew/crewProgressionService.js";
 import { processDirectorAging } from "./directorEngine.js";
 import { processDirectingProjects } from "./directingProjectEngine.js";
 import { processProduction } from "./productionEngine.js";
@@ -91,25 +93,31 @@ export const processWeeklyTick = async (gameState, studio) => {
 
   const awardYear = Math.floor((Number(gameState.currentWeek || 1) - 1) / 52) + 1;
   const isAwardWeek = gameState.currentWeek % 52 === 0;
-  const alreadyProcessed = (gameState.directorAwardYearsProcessed || []).includes(awardYear);
+  const directorAlreadyProcessed = (gameState.directorAwardYearsProcessed || []).includes(awardYear);
+  const actorAlreadyProcessed = (gameState.actorAwardYearsProcessed || []).includes(awardYear);
 
-  if (isAwardWeek && !alreadyProcessed) {
+  if (isAwardWeek && (!directorAlreadyProcessed || !actorAlreadyProcessed)) {
     const histories = await TalentHistory.find({ gameStateId: gameState._id }).lean();
-    
+
     const attachHistory = (talentList) => {
       if (!talentList) return;
-      talentList.forEach((director) => {
-        director.careerHistory = histories.filter(h => h.talentId === director.id && h.type === "CAREER").map(h => h.data);
-        director.awardsHistory = histories.filter(h => h.talentId === director.id && h.type === "AWARD").map(h => h.data);
+      talentList.forEach((talent) => {
+        talent.careerHistory = histories.filter(h => h.talentId === talent.id && h.type === "CAREER").map(h => h.data);
+        talent.awardsHistory = histories.filter(h => h.talentId === talent.id && h.type === "AWARD").map(h => h.data);
       });
     };
 
     attachHistory(gameState.marketDirectors);
     attachHistory(gameState.ownedDirectors);
     attachHistory(gameState.retiredDirectors);
+    attachHistory(gameState.marketActors);
+    attachHistory(gameState.ownedActors);
+    attachHistory(gameState.retiredActors);
   }
 
   processDirectorAwards(gameState, studio);
+  processActorAwards(gameState, studio);
+  processCrewProgression(gameState);
 
   // 9. Production events — movie-level crises & opportunities.
   await processProductionEvents(gameState, studio);
