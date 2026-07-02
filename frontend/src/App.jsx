@@ -22,6 +22,8 @@ import ReleasedMovieDetail from "./pages/movies/ReleasedMovieDetail";
 import ProductionQueue from "./pages/movies/ProductionQueue";
 import MovieComparison from "./pages/movies/MovieComparison";
 import StreamingDeals from "./pages/movies/StreamingDeals";
+import TVShowsHub from "./pages/tvshows/TVShowsHub";
+import ProduceTVShow from "./pages/tvshows/ProduceTVShow";
 import StudioStats from "./pages/studio/StudioStats";
 import FinancialHistory from "./pages/studio/FinancialHistory";
 import AwardsHistory from "./pages/studio/AwardsHistory";
@@ -230,6 +232,22 @@ function App() {
           element={
             <ProtectedRoute>
               <OwnedCrew />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/tv-shows"
+          element={
+            <ProtectedRoute>
+              <TVShowsHub />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/tv-shows/commission"
+          element={
+            <ProtectedRoute>
+              <ProduceTVShow />
             </ProtectedRoute>
           }
         />
