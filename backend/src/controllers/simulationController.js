@@ -32,8 +32,15 @@ export const simulateWeek = async (req, res) => {
     await withTransaction(async (session) => {
       // Run simulation multiple times
       for (let i = 0; i < numWeeks; i++) {
+        const expectedWeek = startWeek + i;
+        if (gameState.currentWeek > expectedWeek) {
+          // This week was already processed (e.g. due to server restart), skip it
+          continue;
+        }
+
         const prevMoney = studio.money || 0;
         const weekRivalReleases = await runWeeklySimulation(gameState, studio);
+        gameState.lastSimulatedWeek = gameState.currentWeek;
         allRivalReleases.push(...(weekRivalReleases || []));
 
         // Financial History Logging

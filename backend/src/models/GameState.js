@@ -14,17 +14,10 @@ const gameStateSchema = new mongoose.Schema(
       default: 1,
     },
 
-    pastAwards: [
-      {
-        year: Number,
-        bestPictureId: String,
-        bestPictureTitle: String,
-        bestDirectorId: String,
-        bestDirectorName: String,
-        bestActorId: String,
-        bestActorName: String,
-      }
-    ],
+    lastSimulatedWeek: {
+      type: Number,
+      default: 0,
+    },
 
     // Global Random Event Engine state. Tracks per-event cooldowns and a
     // rolling history of fired events. Mixed because event-id keys are
