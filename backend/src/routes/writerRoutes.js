@@ -12,7 +12,7 @@ import {
 } from "../controllers/writerController.js";
 
 import { protect } from "../middleware/authMiddleware.js";
-import { validateRequest } from "../middleware/validationMiddleware.js";
+import { validate } from "../middleware/validationMiddleware.js";
 import { startWritingProjectSchema, replaceWriterSchema } from "../validators/talentValidators.js";
 
 const router = express.Router();
@@ -29,8 +29,8 @@ router.post("/fire/:index", protect, fireWriter);
 
 router.get("/projects", protect, getWritingProjects);
 
-router.post("/start-writing", protect, validateRequest(startWritingProjectSchema), startWritingProject);
+router.post("/start-writing", protect, validate(startWritingProjectSchema), startWritingProject);
 
-router.post("/replace-writer", protect, validateRequest(replaceWriterSchema), replaceWriter);
+router.post("/replace-writer", protect, validate(replaceWriterSchema), replaceWriter);
 
 export default router;
