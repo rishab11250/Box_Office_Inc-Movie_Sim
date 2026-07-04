@@ -16,14 +16,17 @@ import actorRoutes from "./routes/actorRoutes.js";
 import crewRoutes from "./routes/crewRoutes.js";
 import movieRoutes from "./routes/movieRoutes.js";
 import simulationRoutes from "./routes/simulationRoutes.js";
-import notificationRoutes from "./routes/notificationRoutes.js";
+import notificationsRoutes from "./routes/notificationsRoutes.js";
+import awardsCampaignRoutes from "./routes/awardsCampaignRoutes.js";
 import newsRoutes from "./routes/newsRoutes.js";
 import franchiseRoutes from "./routes/franchiseRoutes.js";
 import streamingRoutes from "./routes/streamingRoutes.js";
 import tvShowRoutes from "./routes/tvShowRoutes.js";
-import rivalStudioRoutes from "./routes/rivalStudioRoutes.js";
+import rivalsRoutes from "./routes/rivalsRoutes.js";
+import spyRoutes from "./routes/spyRoutes.js";
 import leaderboardRoutes from "./routes/leaderboardRoutes.js";
 import studioRoutes from "./routes/studioRoutes.js";
+import merchRoutes from "./routes/merchRoutes.js";
 
 import errorHandler from "./middleware/errorMiddleware.js";
 
@@ -59,14 +62,17 @@ app.use("/api/actors", actorRoutes);
 app.use("/api/crew", crewRoutes);
 app.use("/api/movies", movieRoutes);
 app.use("/api/simulation", simulationRoutes);
-app.use("/api/notifications", notificationRoutes);
+app.use("/api/notifications", notificationsRoutes);
+app.use("/api/awards-campaign", awardsCampaignRoutes);
 app.use("/api/news", newsRoutes);
 app.use("/api/franchises", franchiseRoutes);
 app.use("/api/streaming", streamingRoutes);
 app.use("/api/tv-shows", tvShowRoutes);
-app.use("/api/rival-studios", rivalStudioRoutes);
+app.use("/api/rival-studios", rivalsRoutes);
+app.use("/api/spy", spyRoutes);
 app.use("/api/leaderboard", leaderboardRoutes);
 app.use("/api/studios", studioRoutes);
+app.use("/api/merch", merchRoutes);
 
 app.use((req, res) => {
   res.status(404).json({
