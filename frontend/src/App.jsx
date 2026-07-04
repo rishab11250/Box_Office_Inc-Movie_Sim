@@ -15,6 +15,7 @@ import OwnedCrew from "./pages/crew/OwnedCrew";
 import ActiveMovies from "./pages/movies/ActiveMovies";
 import CreateMovie from "./pages/movies/CreateMovie";
 import MovieDetails from "./pages/movies/MovieDetails";
+import MarketingStrategies from "./pages/movies/MarketingStrategies";
 import ReadyForRelease from "./pages/movies/ReadyForRelease";
 import ReleaseResult from "./pages/movies/ReleaseResult";
 import MovieLibrary from "./pages/movies/MovieLibrary";
@@ -92,6 +93,14 @@ function App() {
           element={
             <ProtectedRoute>
               <MovieDetails />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/movies/:id/marketing"
+          element={
+            <ProtectedRoute>
+              <MarketingStrategies />
             </ProtectedRoute>
           }
         />
