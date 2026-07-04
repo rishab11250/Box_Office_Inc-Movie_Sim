@@ -66,6 +66,11 @@ const Sidebar = ({ isOpen, onClose }) => {
       icon: Layers,
     },
     {
+      name: "TV Production",
+      path: "/tv-shows",
+      icon: Layers,
+    },
+    {
       name: "Comparison",
       path: "/movies/comparison",
       icon: Scale,
@@ -119,6 +124,11 @@ const Sidebar = ({ isOpen, onClose }) => {
       name: "Financials",
       path: "/studio/history",
       icon: IndianRupee,
+    },
+    {
+      name: "Merchandising",
+      path: "/studio/merchandise",
+      icon: TrendingUp,
     },
     {
       name: "Awards History",
