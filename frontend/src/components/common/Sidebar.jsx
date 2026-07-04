@@ -66,6 +66,11 @@ const Sidebar = ({ isOpen, onClose }) => {
       icon: Layers,
     },
     {
+      name: "TV Production",
+      path: "/tv-shows",
+      icon: Layers,
+    },
+    {
       name: "Comparison",
       path: "/movies/comparison",
       icon: Scale,
