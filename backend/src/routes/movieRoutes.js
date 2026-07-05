@@ -9,6 +9,8 @@ import {
   releaseMovie,
   getMovieDetails,
   generateTitle,
+  getMovieTracking,
+  setHomeMedia,
 } from "../controllers/movieController.js";
 
 
@@ -19,6 +21,8 @@ router.get("/generate-title", protect, generateTitle);
 router.get("/active", protect, getActiveMovies);
 router.get("/released", protect, getReleasedMovies);
 router.post("/:id/release", protect, validate(releaseMovieSchema), releaseMovie);
+router.get("/:id/tracking", protect, getMovieTracking);
+router.post("/:id/home-media", protect, setHomeMedia);
 router.get("/:id", protect, getMovieDetails);
 
 export default router;
