@@ -5,7 +5,7 @@ import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import compression from "compression";
 
-import env from "./config/env.js";
+import env from "./config/envConfig.js";
 
 import marketingRoutes from "./routes/marketingRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
@@ -22,7 +22,6 @@ import notificationsRoutes from "./routes/notificationsRoutes.js";
 import awardsCampaignRoutes from "./routes/awardsCampaignRoutes.js";
 import newsRoutes from "./routes/newsRoutes.js";
 import franchiseRoutes from "./routes/franchiseRoutes.js";
-import marketingRoutes from "./routes/marketingRoutes.js";
 import reviewDashboardRoutes from "./routes/reviewDashboardRoutes.js";
 import streamingRoutes from "./routes/streamingRoutes.js";
 import tvShowRoutes from "./routes/tvShowRoutes.js";
