@@ -7,9 +7,6 @@ import compression from "compression";
 
 import env from "./config/envConfig.js";
 
-import loanRoutes from "./routes/loanRoutes.js";
-import talentRoutes from "./routes/talentRoutes.js";
-import merchRoutes from "./routes/merchRoutes.js";
 import marketingRoutes from "./routes/marketingRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import scriptRoutes from "./routes/scriptRoutes.js";
@@ -78,9 +75,6 @@ app.use("/api/rival-studios", rivalsRoutes);
 app.use("/api/spy", spyRoutes);
 app.use("/api/leaderboard", leaderboardRoutes);
 app.use("/api/studios", studioRoutes);
-app.use("/api/studios/loans", loanRoutes);
-app.use("/api/talent", talentRoutes);
-app.use("/api/marketing", marketingRoutes);
 app.use("/api/reviews", reviewDashboardRoutes);
 
 app.use((req, res) => {
