@@ -85,19 +85,6 @@ const movieSchema = new mongoose.Schema(
       message: String,
       week: Number,
     }],
-
-    // Home media lifecycle (issue #192)
-    homeMedia: {
-      status: {
-        type: String,
-        enum: ["NONE", "VOD", "PHYSICAL", "BOTH"],
-        default: "NONE",
-      },
-      releaseWeek: { type: Number, default: null },
-      weeklyRevenue: { type: Number, default: 0 },
-      totalRevenue: { type: Number, default: 0 },
-      weeksOnSale: { type: Number, default: 0 },
-    },
   },
   { timestamps: true }
 );
