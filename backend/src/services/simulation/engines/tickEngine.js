@@ -14,6 +14,7 @@ import { processMerchandiseSales } from "./merchandiseEngine.js";
 import { processAnnualAwards } from "./awardsEngine.js";
 import { generateNewsFromTrend, generateNewsFromEvent } from "./newsEngine.js";
 import { processStreamingPlatformGrowth, processStreamingRevenue } from "./streamingEngine.js";
+import { processHomeMediaSales } from "./homeMediaEngine.js";
 
 import { addNotification } from "../helpers/notificationHelper.js";
 import { processWriterAging } from "../helpers/agingHelper.js";
@@ -142,6 +143,9 @@ export const processWeeklyTick = async (gameState, studio) => {
   // Recurring weekly streaming revenue for accepted deals (issue #41) — runs
   // after platform growth so royalties reflect this week's platform popularity.
   await processStreamingRevenue(gameState, studio);
+
+  // Process home-media (VOD/DVD) revenue for released movies (issue #192)
+  await processHomeMediaSales(studio, gameState.currentWeek);
 
   return { gameState, rivalReleases };
 };

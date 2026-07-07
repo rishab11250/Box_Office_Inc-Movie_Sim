@@ -479,6 +479,58 @@ export const getMovieDetails = async (req, res) => {
     }
 };
 
+export const setHomeMedia = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { type } = req.body; // "VOD" | "PHYSICAL" | "BOTH"
+
+        const VALID_TYPES = ["VOD", "PHYSICAL", "BOTH"];
+        if (!VALID_TYPES.includes(type)) {
+            return res.status(400).json({ success: false, message: `Invalid home media type. Choose one of: ${VALID_TYPES.join(", ")}` });
+        }
+
+        const movie = await Movie.findById(id);
+        if (!movie) return res.status(404).json({ success: false, message: "Movie not found" });
+        if (movie.status !== "RELEASED") {
+            return res.status(400).json({ success: false, message: "Movie must be RELEASED to set home media." });
+        }
+        if (movie.homeMedia && movie.homeMedia.status !== "NONE") {
+            return res.status(400).json({ success: false, message: "Home media package already set for this movie." });
+        }
+
+        const studio = await Studio.findOne({ owner: req.user._id });
+        if (!studio) return res.status(404).json({ success: false, message: "Studio not found" });
+        const gameState = await GameState.findOne({ user: req.user._id });
+
+        // Licensing costs
+        const COSTS = { VOD: 100_000, PHYSICAL: 50_000, BOTH: 125_000 };
+        const cost = COSTS[type];
+        if (studio.money < cost) {
+            return res.status(400).json({ success: false, message: `Insufficient funds. Home media licensing for ${type} costs $${cost.toLocaleString()}.` });
+        }
+
+        studio.money -= cost;
+        movie.homeMedia = {
+            status: type,
+            releaseWeek: gameState?.currentWeek || 0,
+            weeklyRevenue: 0,
+            totalRevenue: 0,
+            weeksOnSale: 0,
+        };
+
+        await Promise.all([movie.save(), studio.save()]);
+
+        res.status(200).json({
+            success: true,
+            message: `"${movie.title}" is now available for ${type} home release.`,
+            homeMedia: movie.homeMedia,
+            newBalance: studio.money,
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 export const addMarketingCampaign = async (req, res) => {
   try {
     const { id } = req.params;
@@ -537,3 +589,4 @@ export const addMarketingCampaign = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
