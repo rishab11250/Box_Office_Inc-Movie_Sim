@@ -29,6 +29,8 @@ import rivalsRoutes from "./routes/rivalsRoutes.js";
 import spyRoutes from "./routes/spyRoutes.js";
 import leaderboardRoutes from "./routes/leaderboardRoutes.js";
 import studioRoutes from "./routes/studioRoutes.js";
+import loanRoutes from "./routes/loanRoutes.js";
+import merchRoutes from "./routes/merchRoutes.js";
 
 import errorHandler from "./middleware/errorMiddleware.js";
 
@@ -75,6 +77,8 @@ app.use("/api/rival-studios", rivalsRoutes);
 app.use("/api/spy", spyRoutes);
 app.use("/api/leaderboard", leaderboardRoutes);
 app.use("/api/studios", studioRoutes);
+app.use("/api/studios/loans", loanRoutes);
+app.use("/api/marketing", marketingRoutes);
 app.use("/api/reviews", reviewDashboardRoutes);
 
 app.use((req, res) => {
