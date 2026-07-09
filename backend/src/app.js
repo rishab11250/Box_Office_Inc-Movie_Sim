@@ -60,6 +60,11 @@ const limiter = rateLimit({
   }
 });
 
+// FIXED: Actually apply the limiter to the API, but skip it during testing so the CI doesn't crash!
+if (process.env.NODE_ENV !== "test") {
+  app.use("/api", limiter);
+}
+
 app.get("/api/health", (req, res) => {
   res.status(200).json({
     success: true,
