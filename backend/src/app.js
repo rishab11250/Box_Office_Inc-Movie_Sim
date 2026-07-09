@@ -6,7 +6,7 @@ import cookieParser from "cookie-parser";
 import compression from "compression";
 
 import env from "./config/envConfig.js";
-
+ 
 import marketingRoutes from "./routes/marketingRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import scriptRoutes from "./routes/scriptRoutes.js";
