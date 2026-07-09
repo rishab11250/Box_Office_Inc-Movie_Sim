@@ -16,9 +16,11 @@ const Register = () => {
     password: "",
     studioName: "",
   });
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
 
     try {
       const res = await api.post("/auth/register", form);
@@ -32,6 +34,9 @@ const Register = () => {
       navigate("/");
     } catch (error) {
       console.error(error);
+      setError(
+        error.response?.data?.message || "Something went wrong. Please try again."
+      );
     }
   };
 
@@ -40,6 +45,7 @@ const Register = () => {
       <AuthCard title="Create Studio">
         <form onSubmit={handleSubmit} className="space-y-4">
           <AuthInput
+            label="Username"
             placeholder="Username"
             onChange={(e) =>
               setForm({
@@ -50,6 +56,7 @@ const Register = () => {
           />
 
           <AuthInput
+            label="Email"
             placeholder="Email"
             onChange={(e) =>
               setForm({
@@ -60,6 +67,7 @@ const Register = () => {
           />
 
           <AuthInput
+            label="Password"
             type="password"
             placeholder="Password"
             onChange={(e) =>
@@ -71,6 +79,7 @@ const Register = () => {
           />
 
           <AuthInput
+            label="Studio Name"
             placeholder="Studio Name"
             onChange={(e) =>
               setForm({
@@ -79,6 +88,10 @@ const Register = () => {
               })
             }
           />
+
+          {error && (
+            <p className="text-red-400 text-sm text-center">{error}</p>
+          )}
 
           <button
             type="submit"

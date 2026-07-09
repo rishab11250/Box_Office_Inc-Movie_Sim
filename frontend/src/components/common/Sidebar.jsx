@@ -13,11 +13,13 @@ import {
   Scale,
   IndianRupee,
   X,
+  Newspaper,
   Swords,
   Trophy,
 } from "lucide-react";
 
 import { Link, useLocation } from "react-router-dom";
+import ThemeToggle from "./ThemeToggle";
 
 const Sidebar = ({ isOpen, onClose }) => {
   const location = useLocation();
@@ -27,6 +29,11 @@ const Sidebar = ({ isOpen, onClose }) => {
       name: "Dashboard",
       path: "/",
       icon: LayoutDashboard,
+    },
+    {
+      name: "Industry News",
+      path: "/news",
+      icon: Newspaper,
     },
     {
       name: "Rival Studios",
@@ -56,6 +63,11 @@ const Sidebar = ({ isOpen, onClose }) => {
     {
       name: "Production Queue",
       path: "/movies/queue",
+      icon: Layers,
+    },
+    {
+      name: "TV Production",
+      path: "/tv-shows",
       icon: Layers,
     },
     {
@@ -104,6 +116,11 @@ const Sidebar = ({ isOpen, onClose }) => {
       icon: Users,
     },
     {
+      name: "Talent Academy",
+      path: "/talent/academy",
+      icon: Users,
+    },
+    {
       name: "Studio Stats",
       path: "/studio/stats",
       icon: Building2,
@@ -112,6 +129,21 @@ const Sidebar = ({ isOpen, onClose }) => {
       name: "Financials",
       path: "/studio/history",
       icon: IndianRupee,
+    },
+    {
+      name: "Merchandising",
+      path: "/studio/merchandise",
+      icon: TrendingUp,
+    },
+    {
+      name: "Awards History",
+      path: "/studio/awards",
+      icon: Trophy,
+    },
+    {
+      name: "Studio Upgrades",
+      path: "/studio/upgrades",
+      icon: Building2,
     },
     {
       name: "Franchises",
@@ -201,6 +233,9 @@ const Sidebar = ({ isOpen, onClose }) => {
             );
           })}
         </nav>
+        <div className="mt-auto pt-4 border-t" style={{ borderColor: "var(--border)" }}>
+          <ThemeToggle />
+        </div>
       </aside>
     </>
   );

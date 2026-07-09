@@ -12,9 +12,16 @@ const Login = () => {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+
+    if (!email.trim() || !password.trim()) {
+      setError("Please enter both email and password.");
+      return;
+    }
 
     try {
       const res = await api.post("/auth/login", {
@@ -31,6 +38,9 @@ const Login = () => {
       navigate("/");
     } catch (error) {
       console.error(error);
+      setError(
+        error.response?.data?.message || "Invalid email or password."
+      );
     }
   };
 
@@ -39,17 +49,23 @@ const Login = () => {
       <AuthCard title="Welcome Back">
         <form onSubmit={handleSubmit} className="space-y-4">
           <AuthInput
+            label="Email"
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
 
           <AuthInput
+            label="Password"
             type="password"
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
+
+          {error && (
+            <p className="text-red-400 text-sm text-center">{error}</p>
+          )}
 
           <button
             type="submit"

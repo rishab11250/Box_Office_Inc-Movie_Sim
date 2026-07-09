@@ -100,13 +100,13 @@ test("careerImpactEngine: a HIT raises stats, salary, earnings and history", () 
     title: "The Big One",
   };
   const leadActor = {
+    id: "actor-1",
     popularity: 50,
     salary: 1000,
     fanbase: 0,
     hitMovies: 0,
-    careerHistory: [],
   };
-  const director = { reputation: 50, salary: 1000, careerHistory: [] };
+  const director = { id: "director-1", reputation: 50, salary: 1000 };
 
   processCareerImpact(gameState, movie, null, director, leadActor, null);
 
@@ -116,8 +116,12 @@ test("careerImpactEngine: a HIT raises stats, salary, earnings and history", () 
   assert.strictEqual(leadActor.hitMovies, 1);
   assert.strictEqual(leadActor.fanbase, 5000); // 5 * 1_000_000 * 0.001
   assert.strictEqual(leadActor.careerEarnings, 1000); // 1_000_000 * 0.001
-  assert.strictEqual(leadActor.careerHistory.length, 1);
-  assert.strictEqual(leadActor.careerHistory[0].verdict, VERDICTS.HIT);
+  
+  assert.strictEqual(gameState._pendingTalentHistories.length, 2);
+  assert.strictEqual(gameState._pendingTalentHistories[0].talentId, "director-1");
+  assert.strictEqual(gameState._pendingTalentHistories[0].data.verdict, VERDICTS.HIT);
+  assert.strictEqual(gameState._pendingTalentHistories[1].talentId, "actor-1");
+  assert.strictEqual(gameState._pendingTalentHistories[1].data.verdict, VERDICTS.HIT);
 
   assert.strictEqual(director.reputation, 55);
   assert.strictEqual(director.salary, 1100);
@@ -201,6 +205,30 @@ test("payrollEngine: underfunded studio pays partial, floors money at 0, warns",
       gameState._pendingNotifications.length >= 1,
     "an affordability warning should be queued"
   );
+});
+
+test("payrollEngine: partial payment deducts only what was actually paid, not the full payroll", () => {
+  const gameState = {
+    ownedWriters: [],
+    ownedDirectors: [],
+    ownedActors: [
+      { salary: 50, totalEarnings: 0 },
+      { salary: 50, totalEarnings: 0 },
+      { salary: 50, totalEarnings: 0 },
+    ],
+    ownedCrewTeams: [],
+  };
+  const studio = { money: 100 }; // payroll = 150, coverage = 100 / 150
+
+  processWriterPayroll(gameState, studio);
+
+  // Each talent is paid floor(50 * 0.6667) = 33, so 99 is actually paid out.
+  // The studio should lose only that 99 and keep the 1 it never spent,
+  // instead of being deducted the full 150 and wiped to 0.
+  assert.strictEqual(gameState.ownedActors[0].totalEarnings, 33);
+  assert.strictEqual(gameState.ownedActors[1].totalEarnings, 33);
+  assert.strictEqual(gameState.ownedActors[2].totalEarnings, 33);
+  assert.strictEqual(studio.money, 1);
 });
 
 test("payrollEngine: no talent is a no-op", () => {

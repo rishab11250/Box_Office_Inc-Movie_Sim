@@ -31,7 +31,7 @@ test('Box Office Engine - balanced distribution over 1000 trials', () => {
     AVERAGE: 0,
     HIT: 0,
     BLOCKBUSTER: 0,
-    LEGENDARY: 0
+    ALL_TIME_BLOCKBUSTER: 0
   };
 
   const NUM_TRIALS = 1000;

@@ -1,11 +1,16 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 
 const AuthInput = ({
+  label,
   placeholder,
   type = "text",
+  id,
   ...props
 }) => {
+  const generatedId = useId();
+  const inputId = id ?? generatedId;
+
   const [showPassword, setShowPassword] =
     useState(false);
 
@@ -14,7 +19,14 @@ const AuthInput = ({
 
   return (
     <div className="relative">
+      {label && (
+        <label htmlFor={inputId} className="sr-only">
+          {label}
+        </label>
+      )}
+
       <input
+        id={inputId}
         type={
           isPassword
             ? showPassword
@@ -44,6 +56,11 @@ const AuthInput = ({
       {isPassword && (
         <button
           type="button"
+          aria-label={
+            showPassword
+              ? "Hide password"
+              : "Show password"
+          }
           onClick={() =>
             setShowPassword(
               !showPassword
@@ -59,9 +76,9 @@ const AuthInput = ({
           "
         >
           {showPassword ? (
-            <EyeOff size={20} />
+            <EyeOff size={20} aria-hidden="true" />
           ) : (
-            <Eye size={20} />
+            <Eye size={20} aria-hidden="true" />
           )}
         </button>
       )}

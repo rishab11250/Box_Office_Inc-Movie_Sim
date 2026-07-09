@@ -3,7 +3,7 @@ import "./helpers/testEnv.js";
 import test, { before, after } from "node:test";
 import assert from "node:assert";
 import mongoose from "mongoose";
-import { MongoMemoryServer } from "mongodb-memory-server";
+import { MongoMemoryReplSet } from "mongodb-memory-server";
 
 // ---------------------------------------------------------------------------
 // End-to-end gameplay flow over HTTP: register a studio, browse the actor
@@ -24,8 +24,11 @@ let server;
 let baseUrl;
 
 before(async () => {
-  mongod = await MongoMemoryServer.create();
-  await mongoose.connect(mongod.getUri());
+  mongod = await MongoMemoryReplSet.create({
+    replSet: { count: 1 }
+  });
+  let uri = mongod.getUri();
+  await mongoose.connect(uri);
 
   const { default: app } = await import("../src/app.js");
   await new Promise((resolve) => {
@@ -46,15 +49,15 @@ after(async () => {
 // credential literal (nothing sensitive — registers a user in the in-memory DB).
 const TEST_PASSWORD = ["test", "Pw", "8842"].join("-");
 
-const registerStudio = async () => {
+const registerStudio = async (id = Math.random().toString(36).substring(7)) => {
   const res = await fetch(`${baseUrl}/api/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      username: "player_one",
-      email: "p1@example.com",
+      username: `player_${id}`,
+      email: `p1_${id}@example.com`,
       password: TEST_PASSWORD,
-      studioName: "P1 Studios",
+      studioName: `P1 Studios_${id}`,
     }),
   });
   return res.json(); // { success, token, user, studio }

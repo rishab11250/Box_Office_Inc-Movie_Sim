@@ -12,10 +12,12 @@ import {
   createDirectingProject,
   ensureScriptsProductionDefaults,
 } from "../services/director/directingProjectService.js";
-import { withTransaction } from "../utils/transactionHelper.js";
+import { withTransaction } from "../utils/financeTransactionHelper.js";
+import { calculateSigningFee } from "../services/talent/signingFeeService.js";
 import { getMarketplaceTalent, resolveTalent, invalidateUserCache } from "../utils/marketplaceHelper.js";
 import Notification from "../models/Notification.js";
 import TalentHistory from "../models/TalentHistory.js";
+import MarketDirector from "../models/MarketDirector.js";
 
 const findGameState = async (userId) => GameState.findOne({ user: userId });
 
@@ -67,29 +69,17 @@ const findActiveDirectorProject = (gameState, directorId, projectId = null) => {
 
 export const getMarketDirectors = async (req, res) => {
   try {
-    const gameState = await GameState.findOne({ user: req.user._id }).select("marketDirectors").lean();
+    const count = await MarketDirector.countDocuments({ userId: req.user._id });
 
-    if (!gameState) {
-      return res.status(404).json({
-        success: false,
-        message: "Game state not found",
-      });
+    if (count === 0) {
+      const directors = generateDirectors(50);
+      const enriched = directors.map((d) => ({ ...d, userId: req.user._id }));
+      await MarketDirector.insertMany(enriched);
     }
 
-    if (!gameState.marketDirectors || gameState.marketDirectors.length === 0) {
-      const freshGS = await GameState.findOne({ user: req.user._id });
-      freshGS.marketDirectors = generateDirectors(50);
-      await freshGS.save();
-      const result = getMarketplaceTalent(freshGS.marketDirectors, req.query);
-      return res.status(200).json({
-        success: true,
-        directors: presentDirectors(result.items),
-        pagination: { page: result.page, limit: result.limit, total: result.total, totalPages: result.totalPages },
-      });
-    }
-
-    const result = getMarketplaceTalent(gameState.marketDirectors, req.query);
-    res.status(200).json({
+    const marketDocs = await MarketDirector.find({ userId: req.user._id }).lean();
+    const result = getMarketplaceTalent(marketDocs, req.query);
+    return res.status(200).json({
       success: true,
       directors: presentDirectors(result.items),
       pagination: { page: result.page, limit: result.limit, total: result.total, totalPages: result.totalPages },
@@ -262,10 +252,14 @@ export const getDirectorProfile = async (req, res) => {
       });
     }
 
-    const director =
-      gameState.ownedDirectors?.find((candidate) => candidate.id === id) ||
-      gameState.marketDirectors?.find((candidate) => candidate.id === id) ||
-      gameState.retiredDirectors?.find((candidate) => candidate.id === id);
+    let director = gameState.ownedDirectors?.find((candidate) => candidate.id === id);
+    if (!director) {
+      const marketDoc = await MarketDirector.findOne({ id, userId: req.user._id }).lean();
+      if (marketDoc) director = marketDoc;
+    }
+    if (!director) {
+      director = gameState.retiredDirectors?.find((candidate) => candidate.id === id);
+    }
 
     if (!director) {
       return res.status(404).json({
@@ -307,7 +301,8 @@ export const hireDirector = async (req, res) => {
       });
     }
 
-    const { item: marketDirector, index: realIdx } = resolveTalent(gameState.marketDirectors || [], index);
+    const marketDocs = await MarketDirector.find({ userId: req.user._id }).lean();
+    const { item: marketDirector } = resolveTalent(marketDocs, index);
 
     if (!marketDirector) {
       return res.status(404).json({
@@ -316,9 +311,7 @@ export const hireDirector = async (req, res) => {
       });
     }
 
-    const director = marketDirector.toObject
-      ? marketDirector.toObject()
-      : { ...marketDirector };
+    const director = { ...marketDirector };
 
     if (director.status === "RETIRED") {
       return res.status(400).json({
@@ -327,10 +320,29 @@ export const hireDirector = async (req, res) => {
       });
     }
 
+    const studio = await Studio.findOne({ owner: req.user._id });
+    if (!studio) {
+      return res.status(404).json({
+        success: false,
+        message: "Studio not found",
+      });
+    }
+
+    const signingFee = calculateSigningFee(director);
+    if (Number(studio.money || 0) < signingFee) {
+      return res.status(400).json({
+        success: false,
+        message: `Insufficient funds: hiring ${director.name} requires a signing fee of ${signingFee}, but the studio has ${studio.money}.`,
+        signingFee,
+        studioMoney: studio.money,
+      });
+    }
+
     director.status = "AVAILABLE";
     director.hiredAt = new Date();
 
-    gameState.marketDirectors.splice(realIdx, 1);
+    await MarketDirector.deleteOne({ _id: marketDirector._id });
+    gameState.ownedDirectors = gameState.ownedDirectors || [];
     gameState.ownedDirectors.push(director);
 
     await Notification.create({
@@ -340,13 +352,19 @@ export const hireDirector = async (req, res) => {
 
     invalidateUserCache(String(req.user._id));
 
+    studio.money = Math.max(0, Number(studio.money || 0) - signingFee);
+    await studio.save();
     await gameState.save();
+
+    const updatedMarket = await MarketDirector.find({ userId: req.user._id }).lean();
 
     res.status(200).json({
       success: true,
       message: "Director hired",
       director,
-      marketDirectors: presentDirectors(gameState.marketDirectors),
+      signingFee,
+      remainingMoney: studio.money,
+      marketDirectors: presentDirectors(updatedMarket),
       ownedDirectors: presentDirectors(gameState.ownedDirectors),
     });
   } catch (error) {
@@ -412,7 +430,7 @@ export const fireDirector = async (req, res) => {
         delete director.hiredAt;
 
         gameState.ownedDirectors.splice(realIdx, 1);
-        gameState.marketDirectors.push(director);
+        await MarketDirector.create([{ ...director, userId: req.user._id }], { session });
 
         await Notification.create([{
           gameStateId: gameState._id,
@@ -426,6 +444,7 @@ export const fireDirector = async (req, res) => {
     });
 
     invalidateUserCache(String(req.user._id));
+    const updatedMarket = await MarketDirector.find({ userId: req.user._id }).lean();
     res.status(200).json({
       success: true,
       message: "Director released to market",
@@ -434,7 +453,7 @@ export const fireDirector = async (req, res) => {
       fanLoss: result.fanLoss,
       remainingMoney: studio.money,
       remainingFans: studio.fans,
-      marketDirectors: presentDirectors(gameState.marketDirectors),
+      marketDirectors: presentDirectors(updatedMarket),
       ownedDirectors: presentDirectors(gameState.ownedDirectors),
     });
   } catch (error) {

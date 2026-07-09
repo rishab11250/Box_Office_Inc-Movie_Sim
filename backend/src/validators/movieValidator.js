@@ -1,17 +1,46 @@
+
 import { z } from "zod";
+
+// Valid campaign IDs must mirror the MARKETING_CAMPAIGNS array in the frontend (CreateMovie.jsx)
+const VALID_CAMPAIGN_IDS = [
+  "trailer",
+  "teaser",
+  "pr",
+  "tv",
+  "newspaper",
+  "digital",
+  "social",
+  "influencer",
+  "billboards",
+];
 
 export const createMovieSchema = {
   body: z.object({
-    title: z.string().min(1, "Title is required"),
+    title: z.string()
+      .trim()
+      .min(1, "Title is required")
+      .max(100, "Title must not exceed 100 characters"),
     scriptId: z.string().min(1, "Script ID is required"),
     directorId: z.string().min(1, "Director ID is required"),
     leadActorId: z.string().min(1, "Lead Actor ID is required"),
     supportingActorIds: z.array(z.string()).optional(),
     crewTeamId: z.string().min(1, "Crew Team ID is required"),
-    marketingCampaignIds: z.array(z.string()).optional(),
+    marketingCampaignIds: z
+      .array(z.string())
+      .optional()
+      .refine(
+        (ids) =>
+          !ids || ids.every((id) => VALID_CAMPAIGN_IDS.includes(id)),
+        {
+          message: `Each marketing campaign ID must be one of: ${VALID_CAMPAIGN_IDS.join(", ")}`,
+        }
+      ),
     franchiseId: z.string().optional(),
     createFranchise: z.boolean().optional(),
-    franchiseName: z.string().optional(),
+    franchiseName: z.string()
+      .trim()
+      .max(50, "Franchise name must not exceed 50 characters")
+      .optional(),
   }),
 };
 

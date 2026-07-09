@@ -1,4 +1,6 @@
 import { processDirectorAwards } from "../../director/directorAwardsService.js";
+import { processActorAwards } from "../../actor/actorAwardsService.js";
+import { processCrewProgression } from "../../crew/crewProgressionService.js";
 import { processDirectorAging } from "./directorEngine.js";
 import { processDirectingProjects } from "./directingProjectEngine.js";
 import { processProduction } from "./productionEngine.js";
@@ -8,11 +10,17 @@ import { processMarketTrends } from "./trendEngine.js";
 import { generateRivalStudios, processRivalStudios } from "./rivalStudioEngine.js";
 import { processProductionEvents } from "./eventEngine.js";
 import { processRandomEvents } from "./eventEngine.js";
-import { processStreamingPlatformGrowth } from "./streamingEngine.js";
+import { processMerchandiseSales } from "./merchandiseEngine.js";
+import { processAnnualAwards } from "./awardsEngine.js";
+import { generateNewsFromTrend, generateNewsFromEvent } from "./newsEngine.js";
+import { processStreamingPlatformGrowth, processStreamingRevenue } from "./streamingEngine.js";
+import { processLoanRepayments } from "./loanRepaymentEngine.js";
 
 import { addNotification } from "../helpers/notificationHelper.js";
 import { processWriterAging } from "../helpers/agingHelper.js";
 import TalentHistory from "../../../models/TalentHistory.js";
+import MarketDirector from "../../../models/MarketDirector.js";
+import MarketActor from "../../../models/MarketActor.js";
 
 /**
  * @fileoverview Tick Engine — Weekly Simulation Orchestrator
@@ -48,6 +56,11 @@ import TalentHistory from "../../../models/TalentHistory.js";
  * (`runWeeklySimulation`) is responsible for persisting both documents after
  * this function resolves.
  *
+ * Market talent (directors, actors) is now stored in separate collections to
+ * avoid unbounded GameState document growth (issue #188). Award processing
+ * temporarily attaches market directors/actors to the gameState object for
+ * backward compatibility with the awards services.
+ *
  * @async
  * @param {object} gameState    - GameState mongoose document for the current studio.
  * @param {number} gameState.currentWeek - The week that is currently being processed.
@@ -63,7 +76,19 @@ export const processWeeklyTick = async (gameState, studio) => {
   const trendMessages = processMarketTrends(gameState);
   trendMessages.forEach((msg) => addNotification(gameState, msg));
 
+  // Generate news items for newly spawned trends
+  if (gameState.marketTrends && gameState.marketTrends.activeTrends) {
+    for (const trend of gameState.marketTrends.activeTrends) {
+      if (trend.startWeek === gameState.currentWeek) {
+        await generateNewsFromTrend(trend, gameState.currentWeek);
+      }
+    }
+  }
+
   processWriterPayroll(gameState, studio);
+
+  // Process weekly loan repayments and bankruptcy tracking (issue #195)
+  processLoanRepayments(studio, gameState, addNotification);
 
   await processWritingProjects(gameState, studio);
 
@@ -76,42 +101,122 @@ export const processWeeklyTick = async (gameState, studio) => {
 
   processWriterAging(gameState);
 
-  processDirectorAging(gameState);
+  await processDirectorAging(gameState);
 
   const awardYear = Math.floor((Number(gameState.currentWeek || 1) - 1) / 52) + 1;
   const isAwardWeek = gameState.currentWeek % 52 === 0;
-  const alreadyProcessed = (gameState.directorAwardYearsProcessed || []).includes(awardYear);
+  const directorAlreadyProcessed = (gameState.directorAwardYearsProcessed || []).includes(awardYear);
+  const actorAlreadyProcessed = (gameState.actorAwardYearsProcessed || []).includes(awardYear);
 
-  if (isAwardWeek && !alreadyProcessed) {
+  if (isAwardWeek && (!directorAlreadyProcessed || !actorAlreadyProcessed)) {
     const histories = await TalentHistory.find({ gameStateId: gameState._id }).lean();
-    
+
+    // Fetch market talent from separate collections (issue #188) and attach
+    // them temporarily to gameState for award processing.
+    const userId = gameState.user;
+    const marketDirectors = await MarketDirector.find({ userId }).lean();
+    const marketActors = await MarketActor.find({ userId }).lean();
+
     const attachHistory = (talentList) => {
       if (!talentList) return;
-      talentList.forEach((director) => {
-        director.careerHistory = histories.filter(h => h.talentId === director.id && h.type === "CAREER").map(h => h.data);
-        director.awardsHistory = histories.filter(h => h.talentId === director.id && h.type === "AWARD").map(h => h.data);
+      talentList.forEach((talent) => {
+        talent.careerHistory = histories.filter(h => h.talentId === talent.id && h.type === "CAREER").map(h => h.data);
+        talent.awardsHistory = histories.filter(h => h.talentId === talent.id && h.type === "AWARD").map(h => h.data);
       });
     };
 
-    attachHistory(gameState.marketDirectors);
+    // Temporarily attach market data for award services
+    gameState._marketDirectors = marketDirectors;
+    gameState._marketActors = marketActors;
+
+    attachHistory(gameState._marketDirectors);
     attachHistory(gameState.ownedDirectors);
     attachHistory(gameState.retiredDirectors);
+    attachHistory(gameState._marketActors);
+    attachHistory(gameState.ownedActors);
+    attachHistory(gameState.retiredActors);
   }
 
+  // Patch awards services to read from temporary _market arrays if available,
+  // falling back to the (now removed) embedded arrays for safety.
+  const origMarketDirectors = gameState.marketDirectors;
+  const origMarketActors = gameState.marketActors;
+  if (gameState._marketDirectors) gameState.marketDirectors = gameState._marketDirectors;
+  if (gameState._marketActors) gameState.marketActors = gameState._marketActors;
+
   processDirectorAwards(gameState, studio);
+  processActorAwards(gameState, studio);
+  processCrewProgression(gameState);
+
+  // Restore original state (market arrays no longer on gameState)
+  delete gameState.marketDirectors;
+  delete gameState.marketActors;
+  if (origMarketDirectors !== undefined) gameState.marketDirectors = origMarketDirectors;
+
+  // Persist award mutations back to MarketDirector/MarketActor collections
+  if (gameState._marketDirectors) {
+    for (const director of gameState._marketDirectors) {
+      if (director._id) {
+        await MarketDirector.updateOne(
+          { _id: director._id },
+          {
+            $set: {
+              awards: director.awards,
+              reputation: director.reputation,
+              salary: director.salary,
+              marketValue: director.marketValue,
+            },
+          }
+        );
+      }
+    }
+  }
+  if (gameState._marketActors) {
+    for (const actor of gameState._marketActors) {
+      if (actor._id) {
+        await MarketActor.updateOne(
+          { _id: actor._id },
+          {
+            $set: {
+              awards: actor.awards,
+              popularity: actor.popularity,
+              salary: actor.salary,
+              fanbase: actor.fanbase,
+            },
+          }
+        );
+      }
+    }
+  }
+
+  delete gameState._marketDirectors;
+  delete gameState._marketActors;
 
   // 9. Production events — movie-level crises & opportunities.
   await processProductionEvents(gameState, studio);
 
   // 10. Random events — global industry events last so they react to the
   //     week's financial activity.
-  processRandomEvents(gameState, studio);
+  const firedEvents = processRandomEvents(gameState, studio);
+  if (firedEvents && firedEvents.length > 0) {
+    for (const ev of firedEvents) {
+      await generateNewsFromEvent(ev.label, ev.message, gameState.currentWeek);
+    }
+  }
 
+  await processMerchandiseSales(gameState, studio);
   await processStreamingPlatformGrowth(gameState);
+
+  if (gameState.currentWeek > 0 && gameState.currentWeek % 52 === 0) {
+    await processAnnualAwards(gameState, studio);
+  }
+
+  // Recurring weekly streaming revenue for accepted deals (issue #41) — runs
+  // after platform growth so royalties reflect this week's platform popularity.
+  await processStreamingRevenue(gameState, studio);
 
   return { gameState, rivalReleases };
 };
 
 
 export default processWeeklyTick;
-

@@ -4,13 +4,17 @@ import Studio from "../models/Studio.js";
 import Franchise from "../models/Franchise.js";
 import { generateReviews } from "../services/simulation/engines/reviewEngine.js";
 import { generateBoxOffice } from "../services/simulation/engines/boxOfficeEngine.js";
+import { generateBoxOfficeProjection } from "../services/simulation/engines/analystProjectionEngine.js";
 import { getGenreMultiplier } from "../services/simulation/engines/trendEngine.js";
+import { getDemographicMultiplier } from "../services/simulation/engines/demographicsEngine.js";
 import { processCareerImpact } from "../services/simulation/engines/careerImpactEngine.js";
 import { processStudioGrowth } from "../services/simulation/engines/studioGrowthEngine.js";
+import { computeFranchiseProgress } from "../services/simulation/engines/franchiseEngine.js";
 import { addNotification } from "../services/simulation/helpers/notificationHelper.js";
 import { MARKETING_CAMPAIGNS, getEffectiveHypeBoost } from "../constants/marketingCampaigns.js";
 import { generateMovieTitle } from "../services/movie/movieService.js";
-import { withTransaction } from "../utils/transactionHelper.js";
+import { generateNewsFromRelease } from "../services/simulation/engines/newsEngine.js";
+import { withTransaction } from "../utils/financeTransactionHelper.js";
 import Notification from "../models/Notification.js";
 
 const findGameState = async (userId) => GameState.findOne({ user: userId });
@@ -331,11 +335,38 @@ export const releaseMovie = async (req, res) => {
         // this movie's genres, its multiplier boosts or dampens the gross.
         const activeTrends = gameState.marketTrends?.activeTrends || [];
         const marketMultiplier = getGenreMultiplier(activeTrends, script?.genres);
-        const boxOffice = generateBoxOffice(movie, leadActor, director, marketMultiplier);
+        const demographicMultiplier = getDemographicMultiplier(script?.genres, movie.marketingCampaigns);
+        const boxOffice = generateBoxOffice(movie, leadActor, director, marketMultiplier, demographicMultiplier);
         Object.assign(movie, boxOffice);
 
+        // Franchise reputation (read): load the franchise's accumulated shared
+        // fanbase and prestige, earned from prior installments, and feed them into
+        // studio growth so this release benefits from the franchise's track record.
+        // Read within the session for transactional consistency.
+        let franchiseDoc = null;
+        let franchiseModifiers = {};
+        if (movie.franchiseId) {
+            franchiseDoc = await Franchise.findById(movie.franchiseId).session(session);
+            if (franchiseDoc) {
+                franchiseModifiers = {
+                    fanMultiplier: franchiseDoc.fanbaseMultiplier || 1,
+                    prestigeBonus: franchiseDoc.prestigeBonus || 0,
+                };
+            }
+        }
+
         // 3. Update Studio Growth (Money handled here, Fans/Prestige inside)
-        const growth = processStudioGrowth(gameState, studio, movie);
+        const growth = processStudioGrowth(gameState, studio, movie, franchiseModifiers);
+
+        // Franchise reputation (write): fold this installment's outcome into the
+        // franchise's lifetime revenue and accumulated fanbase/prestige. Persisted
+        // with the same session below so it rolls back atomically with the release.
+        if (franchiseDoc) {
+            const progress = computeFranchiseProgress(franchiseDoc, movie);
+            franchiseDoc.fanbaseMultiplier = progress.fanbaseMultiplier;
+            franchiseDoc.prestigeBonus = progress.prestigeBonus;
+            franchiseDoc.totalRevenue = progress.totalRevenue;
+        }
 
         // 4. Update Careers
         processCareerImpact(gameState, movie, writer, director, leadActor, crewTeam);
@@ -379,6 +410,9 @@ export const releaseMovie = async (req, res) => {
         addNotification(gameState, `"${movie.title}" released! Critic Score: ${movie.criticScore} (${movie.criticLabel})`);
         addNotification(gameState, `"${movie.title}" earned ₹${movie.worldwideGross.toLocaleString()} worldwide. Verdict: ${movie.verdict}`);
 
+        // Generate news article for the release
+        await generateNewsFromRelease(movie, studio, gameState.currentWeek);
+
         // Surface the market climate's effect when it was material.
         if (marketMultiplier > 1.01) {
             const matched = activeTrends.find((t) => (script?.genres || []).includes(t.genre));
@@ -397,6 +431,7 @@ export const releaseMovie = async (req, res) => {
             await movie.save({ session });
             await studio.save({ session });
             await gameState.save({ session });
+            if (franchiseDoc) await franchiseDoc.save({ session });
 
             return { movie, growth };
         });
@@ -443,4 +478,89 @@ export const getMovieDetails = async (req, res) => {
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
+};
+
+export const getMovieTracking = async (req, res) => {
+    try {
+        const movie = await Movie.findById(req.params.id).lean();
+        if (!movie) return res.status(404).json({ success: false, message: "Movie not found" });
+
+        const allowedStatuses = ["READY_FOR_RELEASE", "POST_PRODUCTION", "PRODUCTION"];
+        if (!allowedStatuses.includes(movie.status)) {
+            return res.status(400).json({ success: false, message: "Analyst projections are only available before release." });
+        }
+
+        const gameState = await GameState.findOne({ user: req.user._id }).lean();
+        const marketMultiplier = gameState?.marketTrends?.activeTrends
+            ? 1 // trendEngine.getGenreMultiplier not called here to keep this stateless
+            : 1;
+
+        const leadActor = gameState?.ownedActors?.find(a => a.id === movie.leadActorId) ||
+                          { popularity: 50 };
+
+        const projection = generateBoxOfficeProjection(movie, leadActor, marketMultiplier);
+
+        res.status(200).json({ success: true, projection });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+export const addMarketingCampaign = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { campaignId } = req.body;
+
+    const movie = await Movie.findById(id);
+    if (!movie) {
+      return res.status(404).json({ success: false, message: "Movie not found" });
+    }
+
+    if (movie.status === "RELEASED" || movie.status === "RELEASED_STREAMING") {
+      return res.status(400).json({ success: false, message: "Cannot add marketing to a released movie" });
+    }
+
+    const campaign = MARKETING_CAMPAIGNS.find(c => c.id === campaignId);
+    if (!campaign) {
+      return res.status(404).json({ success: false, message: "Campaign type not found" });
+    }
+
+    if (movie.marketingCampaigns.includes(campaignId)) {
+      return res.status(400).json({ success: false, message: "This campaign is already active for this movie" });
+    }
+
+    const studio = await Studio.findOne({ owner: req.user._id });
+    if (!studio) {
+      return res.status(404).json({ success: false, message: "Studio not found" });
+    }
+
+    if (studio.money < campaign.cost) {
+      return res.status(400).json({ success: false, message: "Insufficient funds for this campaign" });
+    }
+
+    const gameState = await GameState.findOne({ user: req.user._id });
+    const script = gameState?.ownedScripts?.find(s => s.id === movie.scriptId) || 
+                   gameState?.marketScripts?.find(s => s.id === movie.scriptId);
+    
+    const genres = script?.genres || [];
+    const effectiveHype = getEffectiveHypeBoost(campaign, genres);
+
+    movie.marketingCampaigns.push(campaignId);
+    movie.marketingBudget += campaign.cost;
+    movie.hype = Math.min(100, movie.hype + effectiveHype);
+
+    studio.money -= campaign.cost;
+
+    await movie.save();
+    await studio.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Successfully launched ${campaign.name} for "${movie.title}"! Hype increased by +${effectiveHype}`,
+      movie,
+      studioMoney: studio.money
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 };

@@ -2,14 +2,16 @@ import GameState from "../models/GameState.js";
 import Studio from "../models/Studio.js";
 import { generateActors } from "../services/actor/actorGenerator.js";
 import { presentActors } from "../services/actor/actorPresenter.js";
-import { withTransaction } from "../utils/transactionHelper.js";
+import { withTransaction } from "../utils/financeTransactionHelper.js";
 import {
   calculateActorCompensation,
   calculateActorFanLoss,
 } from "../services/actor/actorContractService.js";
 import { getMarketplaceTalent, resolveTalent, invalidateUserCache } from "../utils/marketplaceHelper.js";
 import Notification from "../models/Notification.js";
+import { calculateSigningFee } from "../services/talent/signingFeeService.js";
 import TalentHistory from "../models/TalentHistory.js";
+import MarketActor from "../models/MarketActor.js";
 
 const ACTOR_MARKET_SIZE = 1000;
 
@@ -17,28 +19,16 @@ const findGameState = async (userId) => GameState.findOne({ user: userId });
 
 export const getMarketActors = async (req, res) => {
   try {
-    const gameState = await GameState.findOne({ user: req.user._id }).select("marketActors").lean();
+    const count = await MarketActor.countDocuments({ userId: req.user._id });
 
-    if (!gameState) {
-      return res.status(404).json({
-        success: false,
-        message: "Game state not found",
-      });
+    if (count === 0) {
+      const actors = generateActors(100);
+      const enriched = actors.map((a) => ({ ...a, userId: req.user._id }));
+      await MarketActor.insertMany(enriched);
     }
 
-    if (!gameState.marketActors || gameState.marketActors.length === 0) {
-      const freshGS = await GameState.findOne({ user: req.user._id });
-      freshGS.marketActors = generateActors(100);
-      await freshGS.save();
-      const result = getMarketplaceTalent(freshGS.marketActors, req.query);
-      return res.status(200).json({
-        success: true,
-        actors: presentActors(result.items),
-        pagination: { page: result.page, limit: result.limit, total: result.total, totalPages: result.totalPages },
-      });
-    }
-
-    const result = getMarketplaceTalent(gameState.marketActors, req.query);
+    const marketDocs = await MarketActor.find({ userId: req.user._id }).lean();
+    const result = getMarketplaceTalent(marketDocs, req.query);
     return res.status(200).json({
       success: true,
       actors: presentActors(result.items),
@@ -87,7 +77,8 @@ export const hireActor = async (req, res) => {
       });
     }
 
-    const { item: marketActor, index: realIndex } = resolveTalent(gameState.marketActors || [], index);
+    const marketDocs = await MarketActor.find({ userId: req.user._id }).lean();
+    const { item: marketActor } = resolveTalent(marketDocs, index);
 
     if (!marketActor) {
       return res.status(404).json({
@@ -96,8 +87,26 @@ export const hireActor = async (req, res) => {
       });
     }
 
+    const studio = await Studio.findOne({ owner: req.user._id });
+    if (!studio) {
+      return res.status(404).json({
+        success: false,
+        message: "Studio not found",
+      });
+    }
+
+    const signingFee = calculateSigningFee(marketActor);
+    if (Number(studio.money || 0) < signingFee) {
+      return res.status(400).json({
+        success: false,
+        message: `Insufficient funds: hiring this actor requires a signing fee of ${signingFee}, but the studio has ${studio.money}.`,
+        signingFee,
+        studioMoney: studio.money,
+      });
+    }
+
     const result = await withTransaction(async (session) => {
-        const actor = marketActor.toObject ? marketActor.toObject() : { ...marketActor };
+        const actor = { ...marketActor };
 
         if (actor.status === "RETIRED") {
           throw new Error("Retired actors cannot be hired");
@@ -116,7 +125,7 @@ export const hireActor = async (req, res) => {
           }
         }], { session });
 
-        gameState.marketActors.splice(realIndex, 1);
+        await MarketActor.deleteOne({ _id: marketActor._id }, { session });
         gameState.ownedActors = gameState.ownedActors || [];
         gameState.ownedActors.push(actor);
 
@@ -126,16 +135,22 @@ export const hireActor = async (req, res) => {
           createdAt: new Date(),
         }], { session });
 
+        studio.money = Math.max(0, Number(studio.money || 0) - signingFee);
+        await studio.save({ session });
+
         await gameState.save({ session });
         return actor;
     });
 
     invalidateUserCache(String(req.user._id));
+    const updatedMarket = await MarketActor.find({ userId: req.user._id }).lean();
     return res.status(200).json({
       success: true,
       message: "Actor hired",
       actor: result,
-      marketActors: presentActors(gameState.marketActors || []),
+      signingFee,
+      remainingMoney: studio.money,
+      marketActors: presentActors(updatedMarket),
       ownedActors: presentActors(gameState.ownedActors || []),
     });
   } catch (error) {
@@ -158,10 +173,14 @@ export const getActorProfile = async (req, res) => {
       });
     }
 
-    const actor =
-      gameState.ownedActors?.find((candidate) => candidate.id === id) ||
-      gameState.marketActors?.find((candidate) => candidate.id === id) ||
-      gameState.retiredActors?.find((candidate) => candidate.id === id);
+    let actor = gameState.ownedActors?.find((candidate) => candidate.id === id);
+    if (!actor) {
+      const marketDoc = await MarketActor.findOne({ id, userId: req.user._id }).lean();
+      if (marketDoc) actor = marketDoc;
+    }
+    if (!actor) {
+      actor = gameState.retiredActors?.find((candidate) => candidate.id === id);
+    }
 
     if (!actor) {
       return res.status(404).json({
@@ -251,8 +270,7 @@ export const fireActor = async (req, res) => {
         actor.hiredAt = null;
 
         gameState.ownedActors.splice(realIndex, 1);
-        gameState.marketActors = gameState.marketActors || [];
-        gameState.marketActors.push(actor);
+        await MarketActor.create([{ ...actor, userId: req.user._id }], { session });
 
         await Notification.create([{
           gameStateId: gameState._id,
@@ -267,6 +285,7 @@ export const fireActor = async (req, res) => {
     });
 
     invalidateUserCache(String(req.user._id));
+    const updatedMarket = await MarketActor.find({ userId: req.user._id }).lean();
     return res.status(200).json({
       success: true,
       message: "Actor released to market",
@@ -275,7 +294,7 @@ export const fireActor = async (req, res) => {
       fanLoss: result.fanLoss,
       remainingMoney: studio.money,
       remainingFans: studio.fans,
-      marketActors: presentActors(gameState.marketActors || []),
+      marketActors: presentActors(updatedMarket),
       ownedActors: presentActors(gameState.ownedActors || []),
     });
   } catch (error) {

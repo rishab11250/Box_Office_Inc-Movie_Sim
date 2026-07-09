@@ -58,12 +58,18 @@ const ReleasedMovieDetail = () => {
                 <span className="flex items-center gap-1"><Calendar size={16} /> Released Week {movie.releaseWeek}</span>
                 <span className="flex items-center gap-1"><Star size={16} className="text-yellow-500" /> Audience: {movie.audienceScore}</span>
                 <span className="flex items-center gap-1"><Award size={16} className="text-violet-500" /> Critic: {movie.criticScore}</span>
+                <Link to={`/movies/library/${id}/reviews`} className="text-violet-400 hover:text-violet-300 transition text-sm">
+                  [View Reviews]
+                </Link>
             </div>
           </div>
           <div className="bg-[#111827] border border-slate-800 p-6 rounded-3xl text-right min-w-[250px]">
             <div className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">Total Profit</div>
-            <div className={`text-4xl font-black ${movie.profit >= 0 ? 'text-green-500' : 'text-red-500'}`}>₹{movie.profit?.toLocaleString()}</div>
-            <div className="text-slate-400 text-sm font-bold mt-1">{(movie.roi * 100).toFixed(1)}% ROI</div>
+            <div className={`text-4xl font-black ${(movie.profit + (movie.merchandiseRevenue || 0)) >= 0 ? 'text-green-500' : 'text-red-500'}`}>₹{(movie.profit + (movie.merchandiseRevenue || 0))?.toLocaleString()}</div>
+            <div className="text-slate-450 text-sm font-bold mt-1">{(movie.roi * 100).toFixed(1)}% ROI</div>
+            <Link to={`/awards/lobbying/${id}`} className="mt-4 block w-full bg-violet-650 hover:bg-violet-700 text-white font-bold py-2 rounded-xl text-center text-xs transition">
+              Launch Awards Campaign
+            </Link>
           </div>
         </div>
 
@@ -74,7 +80,6 @@ const ReleasedMovieDetail = () => {
                     <h3 className="text-xl font-bold text-white uppercase italic flex items-center gap-2 border-b border-slate-800 pb-4">
                         <TrendingUp className="text-violet-500" /> {movie.releaseType === 'STREAMING' ? 'Streaming Deal' : 'Box Office'}
                     </h3>
-                    
                     {movie.releaseType === 'STREAMING' ? (
                       <div className="space-y-6">
                           <div>
@@ -89,6 +94,12 @@ const ReleasedMovieDetail = () => {
                               <div className="text-slate-500 text-[10px] font-bold uppercase mb-1">Deal Value</div>
                               <div className="text-3xl font-black text-blue-400">₹{movie.streamingDeal?.dealValue?.toLocaleString()}</div>
                           </div>
+                          {movie.merchandiseRevenue > 0 && (
+                              <div className="pt-4 border-t border-slate-800">
+                                  <div className="text-slate-500 text-[10px] font-bold uppercase mb-1 text-orange-500">Merchandise & Licensing</div>
+                                  <div className="text-3xl font-black text-orange-400">+ ₹{movie.merchandiseRevenue?.toLocaleString()}</div>
+                              </div>
+                          )}
                       </div>
                     ) : (
                       <div className="space-y-6">
@@ -108,6 +119,12 @@ const ReleasedMovieDetail = () => {
                               <div className="text-slate-500 text-[10px] font-bold uppercase mb-1">Worldwide Gross</div>
                               <div className="text-3xl font-black text-violet-400">₹{movie.worldwideGross?.toLocaleString()}</div>
                           </div>
+                          {movie.merchandiseRevenue > 0 && (
+                              <div className="pt-4 border-t border-slate-800">
+                                  <div className="text-slate-500 text-[10px] font-bold uppercase mb-1 text-orange-500">Merchandise & Licensing</div>
+                                  <div className="text-3xl font-black text-orange-400">+ ₹{movie.merchandiseRevenue?.toLocaleString()}</div>
+                              </div>
+                          )}
                       </div>
                     )}
                 </div>

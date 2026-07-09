@@ -11,30 +11,7 @@
  * persisting the returned values back to the movie document.
  */
 
-import { VERDICTS } from "../../../constants/verdicts.js";
-
-/**
- * Converts a return-on-investment (ROI) ratio into a human-readable verdict.
- *
- * Thresholds:
- * - ROI < -0.4   → "DISASTER"
- * - ROI < 0      → "FLOP"
- * - ROI ≤ 0.3    → "AVERAGE"
- * - ROI ≤ 1.2    → "HIT"
- * - ROI ≤ 3.0    → "BLOCKBUSTER"
- * - ROI > 3.0    → "ALL_TIME_BLOCKBUSTER"
- *
- * @param {number} roi - Profit divided by total budget. Negative means a loss.
- * @returns {"DISASTER"|"FLOP"|"AVERAGE"|"HIT"|"BLOCKBUSTER"|"ALL_TIME_BLOCKBUSTER"} verdict
- */
-const getVerdict = (roi) => {
-  if (roi < -0.5) return VERDICTS.DISASTER;
-  if (roi < 0) return VERDICTS.FLOP;
-  if (roi <= 0.25) return VERDICTS.AVERAGE;
-  if (roi <= 1.0) return VERDICTS.HIT;
-  if (roi <= 3.0) return VERDICTS.BLOCKBUSTER;
-  return VERDICTS.ALL_TIME_BLOCKBUSTER;
-};
+import { VERDICTS, getVerdict } from "../../../constants/verdicts.js";
 
 /**
  * Generates the full box-office result for a movie release.
@@ -86,7 +63,7 @@ const getVerdict = (roi) => {
  *   verdict: string
  * }} Full box-office breakdown.
  */
-export const generateBoxOffice = (movie, leadActor, director, marketMultiplier = 1) => {
+export const generateBoxOffice = (movie, leadActor, director, marketMultiplier = 1, demographicMultiplier = 1) => {
   const qualityFactor = movie.quality / 100;
   const criticFactor = movie.criticScore / 100;
   const audienceFactor = movie.audienceScore / 100;
@@ -112,7 +89,7 @@ export const generateBoxOffice = (movie, leadActor, director, marketMultiplier =
   // movie's genre). Applied at the opening weekend so it propagates through
   // worldwide gross, profit, ROI, and verdict.
   const openingWeekend = Math.round(
-    (openingBase + starPower + marketingBoost) * (hypeFactor + 0.4) * (0.7 + Math.random() * 0.6) * marketMultiplier * franchiseMultiplier
+    (openingBase + starPower + marketingBoost) * (hypeFactor + 0.4) * (0.7 + Math.random() * 0.6) * marketMultiplier * franchiseMultiplier * demographicMultiplier
   );
 
   // Worldwide Gross influenced by Audience Score (legs) and Critic Score (prestige)

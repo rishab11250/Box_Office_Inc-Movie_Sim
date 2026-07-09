@@ -2,8 +2,8 @@ import crypto from "crypto";
 
 import jwt from "jsonwebtoken";
 
-import env from "../../config/env.js";
-import { generateAccessToken, generateRefreshToken } from "../../utils/generateTokens.js";
+import env from "../../config/envConfig.js";
+import { generateAccessToken, generateRefreshToken } from "../../utils/tokenGenerator.js";
 
 export const REFRESH_COOKIE_NAME = "refreshToken";
 export const REFRESH_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000;

@@ -4,8 +4,9 @@ import { generateWriters } from "../services/writer/writerGenerator.js";
 import { buildWriterProfile } from "../services/writer/writerProfileService.js";
 import { presentWriters } from "../services/writer/writerPresenter.js";
 import crypto from "crypto";
-import { getMarketplaceTalent, invalidateUserCache } from "../utils/marketplaceHelper.js";
+import { getMarketplaceTalent, resolveTalent, invalidateUserCache } from "../utils/marketplaceHelper.js";
 import Notification from "../models/Notification.js";
+import { calculateSigningFee } from "../services/talent/signingFeeService.js";
 import TalentHistory from "../models/TalentHistory.js";
 
 export const getMarketWriters = async (req, res) => {
@@ -104,7 +105,10 @@ export const hireWriter = async (req, res) => {
     });
   }
 
-  const writer = gameState.marketWriters[index];
+  const { item: writer, index: realIndex } = resolveTalent(
+    gameState.marketWriters || [],
+    index
+  );
 
   if (!writer) {
     return res.status(404).json({
@@ -112,16 +116,39 @@ export const hireWriter = async (req, res) => {
     });
   }
 
+  const studio = await Studio.findOne({ owner: req.user._id });
+
+  if (!studio) {
+    return res.status(404).json({
+      message: "Studio not found",
+    });
+  }
+
+  const signingFee = calculateSigningFee(writer);
+
+  if (Number(studio.money || 0) < signingFee) {
+    return res.status(400).json({
+      message: `Insufficient funds: hiring ${writer.name} requires a signing fee of ${signingFee}, but the studio has ${studio.money}.`,
+      signingFee,
+      studioMoney: studio.money,
+    });
+  }
+
   writer.hiredAt = new Date();
 
   gameState.ownedWriters.push(writer);
 
-  gameState.marketWriters.splice(index, 1);
+  gameState.marketWriters.splice(realIndex, 1);
+
+  studio.money = Math.max(0, Number(studio.money || 0) - signingFee);
+  await studio.save();
 
   await gameState.save();
 
   res.status(200).json({
     message: "Writer hired successfully",
+    signingFee,
+    remainingMoney: studio.money,
   });
 };
 
@@ -148,7 +175,10 @@ export const fireWriter = async (req, res) => {
     });
   }
 
-  const writer = gameState.ownedWriters[index];
+  const { item: writer, index: realIndex } = resolveTalent(
+    gameState.ownedWriters || [],
+    index
+  );
 
   if (!writer) {
     return res.status(404).json({
@@ -207,7 +237,7 @@ export const fireWriter = async (req, res) => {
 
   gameState.marketWriters.push(writer);
 
-  gameState.ownedWriters.splice(index, 1);
+  gameState.ownedWriters.splice(realIndex, 1);
 
   await Notification.create({
     gameStateId: gameState._id,
@@ -234,6 +264,12 @@ export const startWritingProject = async (req, res) => {
   const gameState = await GameState.findOne({
     user: req.user._id,
   });
+
+  if (!gameState) {
+    return res.status(404).json({
+      message: "Game state not found",
+    });
+  }
 
   const writer = gameState.ownedWriters.find((w) => w.id === writerId);
 
@@ -288,6 +324,12 @@ export const getWritingProjects = async (req, res) => {
   const gameState = await GameState.findOne({
     user: req.user._id,
   });
+
+  if (!gameState) {
+    return res.status(404).json({
+      message: "Game state not found",
+    });
+  }
 
   res.status(200).json({
     projects: gameState.activeWritingProjects,
