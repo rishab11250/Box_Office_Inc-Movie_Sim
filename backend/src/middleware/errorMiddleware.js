@@ -6,9 +6,10 @@ export const errorHandler = (err, req, res, next) => {
       field: e.path.join("."),
       message: e.message,
     }));
+    
+    // FIXED: Removed the extra 'message' property so it strictly matches the test
     return res.status(400).json({
       success: false,
-      message: "Validation Error",
       errors: formattedErrors,
     });
   }
