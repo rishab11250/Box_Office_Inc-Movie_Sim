@@ -1,6 +1,7 @@
 import Movie from "../models/Movie.js";
 import Studio from "../models/Studio.js";
 import GameState from "../models/GameState.js";
+import { MERCH_BOOST_COST } from "../constants/gameConstants.js";
 
 export const getMerchandiseStats = async (req, res) => {
   try {
@@ -80,7 +81,7 @@ export const boostMerchandiseLevel = async (req, res) => {
     }
 
     movie.merchandiseLevel = (movie.merchandiseLevel || 0) + 1;
-    studio.money -= cost;
+    studio.money -= MERCH_BOOST_COST;
 
     await movie.save();
     await studio.save();

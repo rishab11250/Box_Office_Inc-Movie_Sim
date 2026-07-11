@@ -6,7 +6,7 @@ import cookieParser from "cookie-parser";
 import compression from "compression";
 
 import env from "./config/envConfig.js";
-
+ 
 import marketingRoutes from "./routes/marketingRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import scriptRoutes from "./routes/scriptRoutes.js";
@@ -33,6 +33,7 @@ import loanRoutes from "./routes/loanRoutes.js";
 import merchRoutes from "./routes/merchRoutes.js";
 
 import errorHandler from "./middleware/errorMiddleware.js";
+import logger from "./utils/logger.js";
 
 const app = express();
 
@@ -49,6 +50,21 @@ app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+import rateLimit from "express-rate-limit";
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: {
+    success: false,
+    message: "Too many requests, please try again later."
+  }
+});
+
+// FIXED: Actually apply the limiter to the API, but skip it during testing so the CI doesn't crash!
+if (process.env.NODE_ENV !== "test") {
+  app.use("/api", limiter);
+}
 
 app.get("/api/health", (req, res) => {
   res.status(200).json({
